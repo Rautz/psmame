@@ -113,10 +113,14 @@ const options_entry sdl_options::s_option_entries[] =
 	{ SDLOPTION_VIDEO,                   SDLOPTVAL_SOFT,  OPTION_STRING,     "video output method: soft or opengl" },
 #endif
 	{ SDLOPTION_NUMSCREENS,                   "1",        OPTION_INTEGER,    "number of screens to create; SDLMAME only supports 1 at this time" },
-	{ SDLOPTION_WINDOW ";w",                  "0",        OPTION_BOOLEAN,    "enable window mode; otherwise, full screen mode is assumed" },
-	{ SDLOPTION_MAXIMIZE ";max",              "1",        OPTION_BOOLEAN,    "default to maximized windows; otherwise, windows will be minimized" },
-	{ SDLOPTION_KEEPASPECT ";ka",             "1",        OPTION_BOOLEAN,    "constrain to the proper aspect ratio" },
-	{ SDLOPTION_UNEVENSTRETCH ";ues",         "1",        OPTION_BOOLEAN,    "allow non-integer stretch factors" },
+//ROBO
+	{ SDLOPTION_WINDOW ";w",                  "1",        OPTION_BOOLEAN,    "enable window mode; otherwise, full screen mode is assumed" },
+//ROBO
+	{ SDLOPTION_MAXIMIZE ";max",              "0",        OPTION_BOOLEAN,    "default to maximized windows; otherwise, windows will be minimized" },
+//ROBO
+	{ SDLOPTION_KEEPASPECT ";ka",             "0",        OPTION_BOOLEAN,    "constrain to the proper aspect ratio" },
+//ROBO
+	{ SDLOPTION_UNEVENSTRETCH ";ues",         "0",        OPTION_BOOLEAN,    "allow non-integer stretch factors" },
 	{ SDLOPTION_CENTERH,                      "1",        OPTION_BOOLEAN,    "center horizontally within the view area" },
 	{ SDLOPTION_CENTERV,                      "1",        OPTION_BOOLEAN,    "center vertically within the view area" },
 	#if (SDL_VERSION_ATLEAST(1,2,10))
@@ -191,7 +195,8 @@ const options_entry sdl_options::s_option_entries[] =
 
 	// full screen options
 	{ NULL,                                   NULL,  OPTION_HEADER,     "FULL SCREEN OPTIONS" },
-	{ SDLOPTION_SWITCHRES,                    "0",   OPTION_BOOLEAN,    "enable resolution switching" },
+//ROBO
+	{ SDLOPTION_SWITCHRES,                    "1",   OPTION_BOOLEAN,    "enable resolution switching" },
 	#ifdef SDLMAME_X11
 	{ SDLOPTION_USEALLHEADS,	             "0",	  OPTION_BOOLEAN,    "split full screen image across monitors" },
 	#endif

@@ -478,12 +478,21 @@ static int drawsdl_window_create(sdl_window_info *window, int width, int height)
 
 	setup_texture(window, width, height);
 #else
+#ifndef __CELLOS_LV2__
 	sdl->extra_flags = (window->fullscreen ?  SDL_FULLSCREEN : SDL_RESIZABLE);
 
 	sdl->extra_flags |= sdl->scale_mode->extra_flags;
 
 	sdl->sdlsurf = SDL_SetVideoMode(width, height,
 				   0, SDL_SWSURFACE | SDL_ANYFORMAT | sdl->extra_flags);
+#else
+	sdl->extra_flags = (window->fullscreen ?  SDL_FULLSCREEN : 0);
+
+//	sdl->extra_flags |= sdl->scale_mode->extra_flags;
+
+	sdl->sdlsurf = SDL_SetVideoMode(width, height,
+				   0, sdl->extra_flags);
+#endif
 
 	if (!sdl->sdlsurf)
 		return 1;

@@ -44,7 +44,10 @@ osd_ticks_t osd_ticks(void)
 			start_sec = tp.tv_sec;
 		return (tp.tv_sec - start_sec) * (osd_ticks_t) 1000000 + tp.tv_usec;
 #else
-		return sys_time_get_system_time();
+		static osd_ticks_t timenow;
+		if(!timenow)
+			timenow = sys_time_get_system_time();
+		return sys_time_get_system_time() - timenow;
 #endif
 }
 
