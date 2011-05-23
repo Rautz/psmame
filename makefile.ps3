@@ -28,7 +28,7 @@ TARGET = mame
 endif
 
 ifndef SUBTARGET
-SUBTARGET = tiny
+SUBTARGET = $(TARGET)
 endif
 
 
@@ -451,7 +451,8 @@ CCOMFLAGS += -pg
 endif
 
 # add the optimization flag
-CCOMFLAGS += -O$(OPTIMIZE)
+#HACK
+CCOMFLAGS += -Os
 
 # if we are optimizing, include optimization options
 # and make all errors into warnings
