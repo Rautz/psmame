@@ -13,6 +13,11 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_version.h>
 
+#ifdef __CELLOS_LV2__
+#include <sys/process.h>
+SYS_PROCESS_PARAM(1001, 1024 * 1024);
+#endif
+
 #ifdef SDLMAME_UNIX
 #ifndef SDLMAME_MACOSX
 #ifndef __CELLOS_LV2__ //No fontconfig
@@ -293,6 +298,12 @@ int main(int argc, char **argv)
 {
 	int res = 0;
 
+#ifdef __CELLOS_LV2__
+	argc = 4;
+	static char* arggg[] = {"mame", "-rompath", "/dev_hdd0/game/HBMM90000/USRDIR", "circus"};
+	argv = arggg;
+#endif
+
 #else
 
 /* gee */
@@ -350,7 +361,6 @@ int main(int argc, char *argv[])
 			XCloseDisplay(display);
 	}
 #endif
-
 	{
 		sdl_osd_interface osd;
 		sdl_options options;

@@ -24,7 +24,46 @@
 #endif
 
 //#include <sys/types.h>
+#ifndef __CELLOS_LV2__
 #include <sys/stat.h>
+#else
+extern "C"{
+#include <time.h>
+#include <types.h>
+#include <sys/fs.h>
+
+struct statst {
+        /*
+         * POSIX defines that at least the following members should be
+         * in stat structure
+         */
+        dev_t st_dev;                           /* ID of the device */
+        ino_t st_ino;                           /* File serial number */
+        mode_t st_mode;                         /* Mode of file */
+        nlink_t st_nlink;                       /* Number of links */
+#if 0
+        uid_t st_uid;                           /* User ID */
+        gid_t st_gid;                           /* Group ID */
+#else
+        int32_t st_uid;                         /* User ID */
+        int32_t st_gid;                         /* Group ID */
+#endif
+        dev_t st_rdev;                          /* Device ID */
+        off64_t st_size;                        /* File size in bytes */
+        time_t st_atime;                        /* Last access time */
+        time_t st_mtime;                        /* Last data modiflcation time */
+        time_t st_ctime;                        /* Last status chage time */
+        blksize_t st_blksize;           /* I/O block size */
+        blkcnt_t st_blocks;                     /* Number of blocks */
+        /*
+         * User defined members
+         */
+};
+int stat(const char *path, struct statst *buf);
+#define        S_IFDIR 0040000
+
+}
+#endif
 #include <fcntl.h>
 #ifndef __USE_BSD
 #define __USE_BSD	// to get DT_xxx on Linux
@@ -45,7 +84,7 @@
 
 #if defined(SDLMAME_DARWIN) || defined(SDLMAME_WIN32) || defined(SDLMAME_NO64BITIO) || defined(SDLMAME_BSD) || defined(SDLMAME_OS2) || defined(__CELLOS_LV2__)
 typedef struct dirent sdl_dirent;
-typedef struct stat sdl_stat;
+typedef struct statst sdl_stat;
 #define sdl_readdir readdir
 #define sdl_stat_fn stat
 #else
@@ -91,9 +130,8 @@ static osd_dir_entry_type get_attributes_enttype(int attributes)
 static osd_dir_entry_type get_attributes_stat(const char *file)
 {
 	sdl_stat st;
-//ROBO: FIXME: Stat is broken...
-//	if(sdl_stat_fn(file, &st))
-//		return (osd_dir_entry_type) 0;
+	if(sdl_stat_fn(file, &st))
+		return (osd_dir_entry_type) 0;
 
 #ifdef __CELLOS_LV2__
 	if (st.st_mode & S_IFDIR)
@@ -109,9 +147,8 @@ static osd_dir_entry_type get_attributes_stat(const char *file)
 static UINT64 osd_get_file_size(const char *file)
 {
 	sdl_stat st;
-//ROBO: FIXME: Stat is broken
-//	if(sdl_stat_fn(file, &st))
-//		return 0;
+	if(sdl_stat_fn(file, &st))
+		return 0;
 	return st.st_size;
 }
 
