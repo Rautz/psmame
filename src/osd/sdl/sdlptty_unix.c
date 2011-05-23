@@ -10,7 +10,9 @@
 //============================================================
 
 #include <sys/types.h>
+#ifndef __CELLOS_LV2__
 #include <sys/uio.h>
+#endif
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -22,7 +24,7 @@
 #elif defined(SDLMAME_OPENBSD)
 # include <termios.h>
 # include <util.h>
-#elif defined(SDLMAME_LINUX)
+#elif defined(SDLMAME_LINUX) && !defined(__CELLOS_LV2__)
 # include <pty.h>
 #endif
 
@@ -32,6 +34,7 @@ const char *sdlfile_ptty_identifier  = "/dev/pts";
 
 file_error sdl_open_ptty(const char *path, UINT32 openflags, osd_file **file, UINT64 *filesize)
 {
+#ifndef __CELLOS_LV2__
 	int master;
 	int aslave;
 	char name[100];
@@ -47,12 +50,13 @@ file_error sdl_open_ptty(const char *path, UINT32 openflags, osd_file **file, UI
 	{
 		return FILERR_ACCESS_DENIED;
 	}
-
+#endif
 	return FILERR_NONE;
 }
 
 file_error sdl_read_ptty(osd_file *file, void *buffer, UINT64 offset, UINT32 count, UINT32 *actual)
 {
+#ifndef __CELLOS_LV2__
 	ssize_t result;
 
 	result = read(file->handle, buffer, count);
@@ -66,12 +70,13 @@ file_error sdl_read_ptty(osd_file *file, void *buffer, UINT64 offset, UINT32 cou
 	{
 		*actual = result;
 	}
-
+#endif
 	return FILERR_NONE;
 }
 
 file_error sdl_write_ptty(osd_file *file, const void *buffer, UINT64 offset, UINT32 count, UINT32 *actual)
 {
+#ifndef __CELLOS_LV2__
 	ssize_t result;
 	result = write(file->handle, buffer, count);
 
@@ -84,14 +89,15 @@ file_error sdl_write_ptty(osd_file *file, const void *buffer, UINT64 offset, UIN
 	{
 		*actual = result;
 	}
-
+#endif
 	return FILERR_NONE;
 }
 
 file_error sdl_close_ptty(osd_file *file)
 {
+#ifndef __CELLOS_LV2__
 	close(file->handle);
 	osd_free(file);
-
+#endif
 	return FILERR_NONE;
 }

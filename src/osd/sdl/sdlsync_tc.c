@@ -31,7 +31,9 @@
 
 #include <pthread.h>
 #include <errno.h>
+#ifndef __CELLOS_LV2__
 #include <signal.h>
+#endif
 #include <sys/time.h>
 
 typedef struct _hidden_mutex_t hidden_mutex_t;
@@ -236,6 +238,17 @@ void osd_event_reset(osd_event *event)
 //  osd_event_wait
 //============================================================
 
+#ifdef __CELLOS_LV2__
+#include <sys/sys_time.h>
+int gettimeofday(struct timeval* a, struct timeval* b)
+{
+  uint64_t time = sys_time_get_system_time();
+  a->tv_sec = time / 1000000;
+  a->tv_usec = time % 1000000;
+  return 0;
+}
+#endif
+
 int osd_event_wait(osd_event *event, osd_ticks_t timeout)
 {
 	pthread_mutex_lock(&event->mutex);
@@ -341,7 +354,7 @@ int osd_thread_adjust_priority(osd_thread *thread, int adjust)
 
 int osd_thread_cpu_affinity(osd_thread *thread, UINT32 mask)
 {
-#if !defined(NO_AFFINITY_NP)
+#if !defined(NO_AFFINITY_NP) && !defined(__CELLOS_LV2__)
 	cpu_set_t	cmask;
 	pthread_t	lthread;
 	int			bitnum;
@@ -385,5 +398,7 @@ void osd_thread_wait_free(osd_thread *thread)
 
 void osd_process_kill(void)
 {
+#ifndef __CELLOS_LV2__ //No kill
 	kill(getpid(), SIGKILL);
+#endif
 }

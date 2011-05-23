@@ -9,8 +9,10 @@
 //
 //============================================================
 
+#ifndef __CELLOS_LV2__
 #include <sys/mman.h>
 #include <signal.h>
+#endif
 #ifdef MAME_DEBUG
 #include <unistd.h>
 #endif
@@ -28,10 +30,14 @@
 
 void *osd_alloc_executable(size_t size)
 {
+#ifndef __CELLOS_LV2__
 #if defined(SDLMAME_BSD)
 	return (void *)mmap(0, size, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0);
 #elif defined(SDLMAME_UNIX)
 	return (void *)mmap(0, size, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, 0, 0);
+#endif
+#else
+	return 0;
 #endif
 }
 
@@ -43,10 +49,12 @@ void *osd_alloc_executable(size_t size)
 
 void osd_free_executable(void *ptr, size_t size)
 {
+#ifndef __CELLOS_LV2__
 #ifdef SDLMAME_SOLARIS
 	munmap((char *)ptr, size);
 #else
 	munmap(ptr, size);
+#endif
 #endif
 }
 
@@ -56,6 +64,7 @@ void osd_free_executable(void *ptr, size_t size)
 
 void osd_break_into_debugger(const char *message)
 {
+#ifndef __CELLOS_LV2__
 	#ifdef MAME_DEBUG
 	printf("MAME exception: %s\n", message);
 	printf("Attempting to fall into debugger\n");
@@ -63,4 +72,5 @@ void osd_break_into_debugger(const char *message)
 	#else
 	printf("Ignoring MAME exception: %s\n", message);
 	#endif
+#endif
 }

@@ -1281,9 +1281,10 @@ inline void emit_dword(x86code *&emitptr, UINT32 dword)
 //  emit_qword - emit a dword
 //-------------------------------------------------
 
-inline void emit_qword(x86code *&emitptr, UINT64 qword)
+//ROBO: Rename qword
+inline void emit_qword(x86code *&emitptr, UINT64 qword_)
 {
-	*((UINT64 *)emitptr) = qword;
+	*((UINT64 *)emitptr) = qword_;
 	emitptr += 8;
 }
 

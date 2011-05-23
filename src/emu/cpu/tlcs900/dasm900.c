@@ -8,7 +8,7 @@ Toshiba TLCS-900/H disassembly
 #include "debugger.h"
 #include "tlcs900.h"
 
-
+#ifndef __CELLOS_LV2__ //Dummy file, compile issues
 enum e_mnemonics
 {
 	_ADC, _ADD, _AND, _ANDCF, _BIT, _BS1B,
@@ -2244,3 +2244,4 @@ CPU_DISASSEMBLE( tlcs900 )
 	return pos | flags | DASMFLAG_SUPPORTED;
 }
 
+#endif

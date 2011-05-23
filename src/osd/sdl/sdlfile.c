@@ -76,7 +76,9 @@ file_error error_to_file_error(UINT32 error)
 	case EACCES:
 	case EROFS:
 	#ifndef SDLMAME_WIN32
+	#ifndef __CELLOS_LV2__
 	case ETXTBSY:
+	#endif
 	#endif
 	case EEXIST:
 	case EPERM:
@@ -103,7 +105,7 @@ file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UINT64 
 	UINT32 access;
 	const char *src;
 	char *dst;
-	#if defined(SDLMAME_DARWIN) || defined(SDLMAME_WIN32) || defined(SDLMAME_NO64BITIO) || defined(SDLMAME_BSD) || defined(SDLMAME_OS2)
+	#if defined(SDLMAME_DARWIN) || defined(SDLMAME_WIN32) || defined(SDLMAME_NO64BITIO) || defined(SDLMAME_BSD) || defined(SDLMAME_OS2) || defined(__CELLOS_LV2__)
 	struct stat st;
 	#else
 	struct stat64 st;
@@ -198,12 +200,12 @@ file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UINT64 
 		osd_free(envstr);
 	}
 
-	#if defined(SDLMAME_WIN32) || defined(SDLMAME_OS2)
+	#if (defined(SDLMAME_WIN32) || defined(SDLMAME_OS2)) && !defined(__CELLOS_LV2__)
 	access |= O_BINARY;
 	#endif
 
 	// attempt to open the file
-	#if defined(SDLMAME_DARWIN) || defined(SDLMAME_WIN32) || defined(SDLMAME_NO64BITIO) || defined(SDLMAME_BSD) || defined(SDLMAME_OS2)
+	#if defined(SDLMAME_DARWIN) || defined(SDLMAME_WIN32) || defined(SDLMAME_NO64BITIO) || defined(SDLMAME_BSD) || defined(SDLMAME_OS2) || defined(__CELLOS_LV2__)
 	(*file)->handle = open(tmpstr, access, 0666);
 	#else
 	(*file)->handle = open64(tmpstr, access, 0666);
@@ -226,7 +228,7 @@ file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UINT64 
 				// attempt to reopen the file
 				if (error == NO_ERROR)
 				{
-					#if defined(SDLMAME_DARWIN) || defined(SDLMAME_WIN32) || defined(SDLMAME_NO64BITIO) || defined(SDLMAME_BSD) || defined(SDLMAME_OS2)
+					#if defined(SDLMAME_DARWIN) || defined(SDLMAME_WIN32) || defined(SDLMAME_NO64BITIO) || defined(SDLMAME_BSD) || defined(SDLMAME_OS2) || defined(__CELLOS_LV2__)
 					(*file)->handle = open(tmpstr, access, 0666);
 					#else
 					(*file)->handle = open64(tmpstr, access, 0666);
@@ -246,7 +248,7 @@ file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UINT64 
 	}
 
 	// get the file size
-	#if defined(SDLMAME_DARWIN) || defined(SDLMAME_WIN32) || defined(SDLMAME_NO64BITIO) || defined(SDLMAME_BSD) || defined(SDLMAME_OS2)
+	#if defined(SDLMAME_DARWIN) || defined(SDLMAME_WIN32) || defined(SDLMAME_NO64BITIO) || defined(SDLMAME_BSD) || defined(SDLMAME_OS2) || defined(__CELLOS_LV2__)
 	fstat((*file)->handle, &st);
 	#else
 	fstat64((*file)->handle, &st);
@@ -282,7 +284,7 @@ file_error osd_read(osd_file *file, void *buffer, UINT64 offset, UINT32 count, U
 #if defined(SDLMAME_DARWIN) || defined(SDLMAME_BSD)
          result = pread(file->handle, buffer, count, offset);
          if (result < 0)
-#elif defined(SDLMAME_WIN32) || defined(SDLMAME_NO64BITIO) || defined(SDLMAME_OS2)
+#elif defined(SDLMAME_WIN32) || defined(SDLMAME_NO64BITIO) || defined(SDLMAME_OS2) || defined(__CELLOS_LV2__)
          lseek(file->handle, (UINT32)offset&0xffffffff, SEEK_SET);
          result = read(file->handle, buffer, count);
          if (result < 0)
@@ -328,7 +330,7 @@ file_error osd_write(osd_file *file, const void *buffer, UINT64 offset, UINT32 c
 #if defined(SDLMAME_DARWIN) || defined(SDLMAME_BSD)
          result = pwrite(file->handle, buffer, count, offset);
          if (!result)
-#elif defined(SDLMAME_WIN32) || defined(SDLMAME_NO64BITIO) || defined(SDLMAME_OS2)
+#elif defined(SDLMAME_WIN32) || defined(SDLMAME_NO64BITIO) || defined(SDLMAME_OS2) || defined(__CELLOS_LV2__)
          lseek(file->handle, (UINT32)offset&0xffffffff, SEEK_SET);
          result = write(file->handle, buffer, count);
          if (!result)

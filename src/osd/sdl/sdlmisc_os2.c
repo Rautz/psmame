@@ -17,8 +17,10 @@
 #include <ctype.h>
 #include <stdlib.h>
 
+#ifndef __CELLOS_LV2__
 #define INCL_DOS
 #include <os2.h>
+#endif
 
 // MAME headers
 #include "osdcore.h"
@@ -32,10 +34,14 @@
 
 void *osd_alloc_executable(size_t size)
 {
+#ifndef __CELLOS_LV2__
 	void *p;
 
 	DosAllocMem( &p, size, fALLOC );
 	return p;
+#else
+	return 0;
+#endif
 }
 
 //============================================================
@@ -46,7 +52,9 @@ void *osd_alloc_executable(size_t size)
 
 void osd_free_executable(void *ptr, size_t size)
 {
+#ifndef __CELLOS_LV2__
 	DosFreeMem( ptr );
+#endif
 }
 
 //============================================================

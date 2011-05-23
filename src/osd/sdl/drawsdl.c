@@ -13,12 +13,14 @@
 #include <math.h>
 #include <stdio.h>
 
-// MAME headers
-#include "emu.h"
-#include "ui.h"
+//ROBO: Inluce SDL first to fix compile errors
 
 // standard SDL headers
 #include <SDL/SDL.h>
+
+// MAME headers
+#include "emu.h"
+#include "ui.h"
 
 // OSD headers
 #include "osdsdl.h"

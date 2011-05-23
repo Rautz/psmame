@@ -43,7 +43,7 @@
 #define INVPATHSEPCH '\\'
 #endif
 
-#if defined(SDLMAME_DARWIN) || defined(SDLMAME_WIN32) || defined(SDLMAME_NO64BITIO) || defined(SDLMAME_BSD) || defined(SDLMAME_OS2)
+#if defined(SDLMAME_DARWIN) || defined(SDLMAME_WIN32) || defined(SDLMAME_NO64BITIO) || defined(SDLMAME_BSD) || defined(SDLMAME_OS2) || defined(__CELLOS_LV2__)
 typedef struct dirent sdl_dirent;
 typedef struct stat sdl_stat;
 #define sdl_readdir readdir
@@ -91,10 +91,15 @@ static osd_dir_entry_type get_attributes_enttype(int attributes)
 static osd_dir_entry_type get_attributes_stat(const char *file)
 {
 	sdl_stat st;
-	if(sdl_stat_fn(file, &st))
-		return (osd_dir_entry_type) 0;
+//ROBO: FIXME: Stat is broken...
+//	if(sdl_stat_fn(file, &st))
+//		return (osd_dir_entry_type) 0;
 
+#ifdef __CELLOS_LV2__
+	if (st.st_mode & S_IFDIR)
+#else
 	if (S_ISDIR(st.st_mode))
+#endif
 		return ENTTYPE_DIR;
 	else
 		return ENTTYPE_FILE;
@@ -104,8 +109,9 @@ static osd_dir_entry_type get_attributes_stat(const char *file)
 static UINT64 osd_get_file_size(const char *file)
 {
 	sdl_stat st;
-	if(sdl_stat_fn(file, &st))
-		return 0;
+//ROBO: FIXME: Stat is broken
+//	if(sdl_stat_fn(file, &st))
+//		return 0;
 	return st.st_size;
 }
 

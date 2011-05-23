@@ -64,7 +64,11 @@ static void notifier_callback(const char *outname, INT32 value, void *param);
 
 PID_CAST osd_getpid(void)
 {
+#ifndef __CELLOS_LV2__ //No getpid_
 	return (PID_CAST) getpid();
+#else
+	return 41245;
+#endif
 }
 
 //============================================================
@@ -77,6 +81,9 @@ void sdloutput_init(running_machine &machine)
 
 	machine.add_notifier(MACHINE_NOTIFY_EXIT, sdloutput_exit);
 
+#ifdef __CELLOS_LV2__ //No O_NONBLOCK
+# define O_NONBLOCK 0
+#endif
 	fildes = open(SDLMAME_OUTPUT, O_RDWR | O_NONBLOCK);
 
 	if (fildes < 0)

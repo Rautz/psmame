@@ -15,8 +15,12 @@
 
 #ifdef SDLMAME_UNIX
 #ifndef SDLMAME_MACOSX
+#ifndef __CELLOS_LV2__ //No fontconfig
 #include <SDL/SDL_ttf.h>
 #include <fontconfig/fontconfig.h>
+#else
+#include <SDL/SDL_ttf.h>
+#endif
 #endif
 #ifdef SDLMAME_MACOSX
 #include <Carbon/Carbon.h>
@@ -318,7 +322,9 @@ int main(int argc, char *argv[])
 	{
 		printf("SDL_ttf failed: %s\n", TTF_GetError());
 	}
+#ifndef __CELLOS_LV2__ //No fontconfig
 	FcInit();
+#endif
 	#endif
 	#endif
 
@@ -364,7 +370,9 @@ int main(int argc, char *argv[])
 	#ifdef SDLMAME_UNIX
 	#ifndef SDLMAME_MACOSX
 	TTF_Quit();
+#ifndef __CELLOS_LV2__ //No fontconfig
 	FcFini();
+#endif
 	#endif
 	#endif
 
@@ -583,13 +591,14 @@ void sdl_osd_interface::init(running_machine &machine)
      * lib at startup.
      */
 	/* FIXME: move lib loading code from drawogl.c here */
-
+#ifndef __CELLOS_LV2__ //No opengl
 	stemp = options.gl_lib();
 	if (stemp != NULL && strcmp(stemp, SDLOPTVAL_AUTO) != 0)
 	{
 		osd_setenv("SDL_VIDEO_GL_DRIVER", stemp, 1);
 		mame_printf_verbose("Setting SDL_VIDEO_GL_DRIVER = '%s' ...\n", stemp);
 	}
+#endif
 
 	/* get number of processors */
 	stemp = options.numprocessors();
@@ -842,6 +851,7 @@ static TTF_Font * TTF_OpenFont_Magic(astring name, int fsize)
 
 static TTF_Font *search_font_config(astring name, bool bold, bool italic, bool underline, bool &bakedstyles)
 {
+#ifndef __CELLOS_LV2__ //No fontconfig
 	TTF_Font *font = (TTF_Font *)NULL;
 	FcConfig *config;
 	FcPattern *pat;
@@ -946,6 +956,9 @@ static TTF_Font *search_font_config(astring name, bool bold, bool italic, bool u
 	FcObjectSetDestroy(os);
 	FcFontSetDestroy(fontset);
 	return font;
+#else
+	return 0;
+#endif
 }
 
 //-------------------------------------------------

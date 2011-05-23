@@ -324,13 +324,13 @@ static UINT64 read_to_qword(UINT8* region)
 	return ret;
 }
 
-
-static void write_from_qword(UINT8* region, UINT64 qword)
+//ROBO: Rename 'qword'
+static void write_from_qword(UINT8* region, UINT64 qword_)
 {
 	int i;
 	for (i=0;i<8;i++)
 	{
-		region[i] = qword >> (56-(i*8));
+		region[i] = qword_ >> (56-(i*8));
 	}
 }
 

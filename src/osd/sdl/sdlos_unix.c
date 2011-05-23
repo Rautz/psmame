@@ -11,7 +11,12 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#ifndef __CELLOS_LV2__
 #include <sys/mman.h>
+#else
+#include <sys/sys_time.h>
+#include <sys/timer.h>
+#endif
 #include <time.h>
 #include <sys/time.h>
 #include <sys/stat.h>
@@ -30,6 +35,7 @@
 
 osd_ticks_t osd_ticks(void)
 {
+#ifndef __CELLOS_LV2__
 		struct timeval    tp;
 		static osd_ticks_t start_sec = 0;
 
@@ -37,6 +43,9 @@ osd_ticks_t osd_ticks(void)
 		if (start_sec==0)
 			start_sec = tp.tv_sec;
 		return (tp.tv_sec - start_sec) * (osd_ticks_t) 1000000 + tp.tv_usec;
+#else
+		return sys_time_get_system_time();
+#endif
 }
 
 osd_ticks_t osd_ticks_per_second(void)
@@ -60,7 +69,11 @@ void osd_sleep(osd_ticks_t duration)
 	{
 		// take a couple of msecs off the top for good measure
 		msec -= 2;
+#ifndef __CELLOS_LV2__
 		usleep(msec*1000);
+#else
+		sys_timer_usleep(msec*1000);
+#endif
 	}
 }
 
@@ -111,7 +124,11 @@ void osd_free(void *ptr)
 
 char *osd_getenv(const char *name)
 {
+#ifndef __CELLOS_LV2__
 	return getenv(name);
+#else
+	return 0;
+#endif
 }
 
 
@@ -121,7 +138,11 @@ char *osd_getenv(const char *name)
 
 int osd_setenv(const char *name, const char *value, int overwrite)
 {
+#ifndef __CELLOS_LV2__
 	return setenv(name, value, overwrite);
+#else
+	return 0;
+#endif
 }
 
 #if defined(SDL_VIDEO_DRIVER_X11) && defined(SDLMAME_X11)
@@ -240,13 +261,13 @@ osd_directory_entry *osd_stat(const char *path)
 {
 	int err;
 	osd_directory_entry *result = NULL;
-	#if defined(SDLMAME_NO64BITIO) || defined(SDLMAME_BSD)
+	#if defined(SDLMAME_NO64BITIO) || defined(SDLMAME_BSD) || defined(__CELLOS_LV2__)
 	struct stat st;
 	#else
 	struct stat64 st;
 	#endif
 
-	#if defined(SDLMAME_NO64BITIO) || defined(SDLMAME_BSD)
+	#if defined(SDLMAME_NO64BITIO) || defined(SDLMAME_BSD) || defined(__CELLOS_LV2__)
 	err = stat(path, &st);
 	#else
 	err = stat64(path, &st);
@@ -259,6 +280,9 @@ osd_directory_entry *osd_stat(const char *path)
 	result = (osd_directory_entry *) osd_malloc(sizeof(*result) + strlen(path) + 1);
 	strcpy(((char *) result) + sizeof(*result), path);
 	result->name = ((char *) result) + sizeof(*result);
+#ifdef __CELLOS_LV2__
+#define S_ISDIR(a) ((a) & S_IFDIR)
+#endif
 	result->type = S_ISDIR(st.st_mode) ? ENTTYPE_DIR : ENTTYPE_FILE;
 	result->size = (UINT64)st.st_size;
 
@@ -286,12 +310,16 @@ file_error osd_get_full_path(char **dst, const char *path)
 
 	err = FILERR_NONE;
 
+#ifndef __CELLOS_LV2__
 	if (getcwd(path_buffer, 511) == NULL)
 	{
 		printf("osd_get_full_path: failed!\n");
 		err = FILERR_FAILURE;
 	}
 	else
+#else
+	strcpy(path_buffer, "/dev_hdd0/game/HBMM90000/USRDIR");
+#endif
 	{
 		*dst = (char *)osd_malloc(strlen(path_buffer)+strlen(path)+3);
 

@@ -5581,7 +5581,8 @@ static void oC8(tlcs900_state *cpustate)
 
 
 /* memory used as source in word operations */
-static void _D0(tlcs900_state *cpustate)
+//ROBO: FIXME: ?
+static void a_D0(tlcs900_state *cpustate)
 {
 	const tlcs900inst *inst;
 	UINT32 *reg = NULL;

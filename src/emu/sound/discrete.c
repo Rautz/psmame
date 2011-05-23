@@ -944,8 +944,10 @@ void discrete_device::device_start()
 
 	/* enable profiling */
 	m_profiling = 0;
+#ifndef __CELLOS_LV2__ //No getenv
 	if (getenv("DISCRETE_PROFILING"))
 		m_profiling = atoi(getenv("DISCRETE_PROFILING"));
+#endif
 
 	/* Build the final block list */
 	sound_block_list_t block_list;

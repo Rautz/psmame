@@ -71,6 +71,7 @@ file_error sdl_open_socket(const char *path, UINT32 openflags, osd_file **file, 
 file_error sdl_read_socket(osd_file *file, void *buffer, UINT64 offset, UINT32 count, UINT32 *actual)
 {
 #ifndef SDLMAME_WIN32
+#ifndef __CELLOS_LV2__
 	ssize_t result;
 	char line[80];
 	struct timeval timeout;
@@ -105,12 +106,14 @@ file_error sdl_read_socket(osd_file *file, void *buffer, UINT64 offset, UINT32 c
 		*actual = result;
 	}
 #endif
+#endif
 	return FILERR_NONE;
 }
 
 file_error sdl_write_socket(osd_file *file, const void *buffer, UINT64 offset, UINT32 count, UINT32 *actual)
 {
 #ifndef SDLMAME_WIN32
+#ifndef __CELLOS_LV2__
 	ssize_t result;
 
 	result = write(file->handle, buffer, count);
@@ -124,6 +127,7 @@ file_error sdl_write_socket(osd_file *file, const void *buffer, UINT64 offset, U
 	{
 		*actual = result;
 	}
+#endif
 #endif
 	return FILERR_NONE;
 }
