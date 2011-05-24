@@ -305,7 +305,7 @@ int main(int argc, char **argv)
 
 #ifdef __CELLOS_LV2__
 	argc = 4;
-	static char* arggg[] = {"mame", "-rompath", "/dev_hdd0/game/HBMM90000/USRDIR", "pacman"};
+	static char* arggg[] = {"mame", "-rompath", "/dev_hdd0/game/HBMM90000/USRDIR", "mslug2"};
 	argv = arggg;
 #endif
 
