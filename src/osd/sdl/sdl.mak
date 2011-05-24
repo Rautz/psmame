@@ -369,8 +369,7 @@ CCOMFLAGS += `$(SDL_INSTALL_ROOT)/bin/sdl-config --cflags  | sed -e 's:/SDL::' -
 LIBS += -lm `$(SDL_INSTALL_ROOT)/bin/sdl-config --libs`
 endif
 
-INCPATH += `pkg-config --cflags fontconfig`
-LIBS += `pkg-config --libs fontconfig`
+#ROBO: Remove font config here
 LIBS += -lSDL_ttf -lutil
 
 endif # Unix
