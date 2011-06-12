@@ -69,15 +69,23 @@ SYS_PROCESS_PARAM(1001, 1024 * 1024);
 //============================================================
 
 #ifndef INI_PATH
+#ifdef __CELLOS_LV2__
+#ifdef MESS
+	#define INI_PATH "/dev_hdd0/game/MAME90000/USRDIR/;.;ini"
+#else
+	#define INI_PATH "/dev_hdd0/game/MAME90000/USRDIR/;.;ini"
+#endif
+#else
 #if defined(SDLMAME_WIN32) || defined(SDLMAME_MACOSX) || defined(SDLMAME_OS2)
 	#define INI_PATH ".;ini"
 #else
 #ifdef MESS
-	#define INI_PATH "$HOME/.mess;.;ini"
+	#define INI_PATH "$HOME/.mess;ini"
 #else
-	#define INI_PATH "$HOME/.mame;.;ini"
+	#define INI_PATH "$HOME/.mame;ini"
 #endif // MESS
 #endif // MACOSX
+#endif // __CELLOS_LV2__
 #endif // INI_PATH
 
 
@@ -305,7 +313,7 @@ int main(int argc, char **argv)
 
 #ifdef __CELLOS_LV2__
 	argc = 4;
-	static char* arggg[] = {"mame", "-rompath", "/dev_hdd0/game/HBMM90000/USRDIR", "mslug2"};
+	static char* arggg[] = {"mame", "-rompath", "/dev_hdd0/game/HBMM90000/USRDIR", "mk3"};
 	argv = arggg;
 #endif
 

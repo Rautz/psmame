@@ -417,7 +417,7 @@ endif
 #-------------------------------------------------
 
 # start with empties for everything
-CCOMFLAGS = `freetype-config --cflags` `sdl-config --cflags` -I$(CELL_SDK)/target/ppu/include/SDL -w
+CCOMFLAGS = `freetype-config --cflags` `sdl-config --cflags` -I$(CELL_SDK)/target/ppu/include/SDL -w -DPS3_SET_$(PS3_SET_NUM)
 CONLYFLAGS =
 COBJFLAGS =
 CPPONLYFLAGS =
