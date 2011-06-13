@@ -2,6 +2,8 @@
 
 void			Exit		()
 {
+	QuitES();
+
 	exit(0);
 }
 
