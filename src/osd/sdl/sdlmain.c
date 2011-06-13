@@ -306,10 +306,18 @@ sdl_options::sdl_options()
 
 // we do some special sauce on Win32...
 
+#ifdef __CELLOS_LV2__
+#include <SDL_cellhacks.h>
+#endif
+
 #if !defined(SDLMAME_WIN32)
 int main(int argc, char **argv)
 {
 	int res = 0;
+
+#ifdef __CELLOS_LV2__
+	CELL_RC_SetFile("/dev_hdd0/game/MAME90000/USRDIR/sdcellrc");
+#endif
 
 #else
 
