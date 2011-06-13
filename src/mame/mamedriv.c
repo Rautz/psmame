@@ -37,7 +37,7 @@ const game_driver * const drivers[] =
 
 #else	/* DRIVER_RECURSIVE */
 
-#ifdef PS3_SET_1
+//#ifdef PS3_SET_1
 	/* "Pacman hardware" games */
 	DRIVER( puckman )	/* (c) 1980 Namco */
 	DRIVER( puckmana )	/* (c) 1980 Namco */
@@ -608,7 +608,7 @@ const game_driver * const drivers[] =
 	DRIVER( jyunai )	/* (c) 1998 */
 	DRIVER( csplayh5 )	/* (c) 1998 */
 	DRIVER( bikiniko )	/* (c) 1999 */
-#elif defined(PS3_SET_2)
+//#elif defined(PS3_SET_2)
 	/* "Phoenix hardware" (and variations) games */
 	DRIVER( safarir )	/* Shin Nihon Kikaku (SNK) */
 	DRIVER( phoenix )	/* (c) 1980 Amstar */
@@ -1015,7 +1015,7 @@ const game_driver * const drivers[] =
 	DRIVER( 20pacgalr0 )	/* (c) 2000 Ver 1.00 */
 	DRIVER( turrett )	/* (c) 2001 licensed from Dell Electronics */
 
-#elif defined(PS3_SET_3)
+//#elif defined(PS3_SET_3)
 
 	/* Universal games */
 	DRIVER( cosmicg )	/* 7907 (c) 1979 */
@@ -1538,7 +1538,7 @@ const game_driver * const drivers[] =
 	DRIVER( shrike )	/* (c) 1987 */
 	DRIVER( gridlee )	/* [1983 Videa] prototype - no copyright notice */
 
-#elif defined(PS3_SET_4)
+//#elif defined(PS3_SET_4)
 	/* Irem games */
 	/* trivia: IREM means "International Rental Electronics Machines" */
 	DRIVER( andromed )	/* (c) 1979 */
@@ -2442,7 +2442,7 @@ const game_driver * const drivers[] =
 	DRIVER( bbakraid )	/* (c) 1999 8ing */
 	DRIVER( bbakraidj )	/* (c) 1999 8ing */
 	DRIVER( bbakraidja )	/* (c) 1999 8ing */
-#elif defined(PS3_SET_5)
+//#elif defined(PS3_SET_5)
 
 /*
 Toa Plan's board list
@@ -3215,7 +3215,7 @@ V-V                           TP-027
 	DRIVER( strider2 )	/* Strider 2 (USA 991213) */
 	DRIVER( strider2a )	/* Strider 2 (ASIA 991213) */
 	DRIVER( shiryu2 )	/* Strider Hiryu 2 (JAPAN 991213) */
-#elif defined(PS3_SET_6)
+//#elif defined(PS3_SET_6)
 	/* Tecmo ZN1 */
 	DRIVER( tps )
 	DRIVER( glpracr2 )	/* Gallop Racer 2 (USA) */
@@ -3724,7 +3724,7 @@ V-V                           TP-027
 	DRIVER( gtclasscp )	/* (c) 2001 Incredible Technologies */
 	DRIVER( gtclasscs )	/* (c) 2001 Incredible Technologies */
 
-#elif defined(PS3_SET_7)
+//#elif defined(PS3_SET_7)
 
 	/* Leland games */
 	DRIVER( cerberus )	/* (c) 1985 Cinematronics */
@@ -3979,7 +3979,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( calorie )	/* (c) 1986 Sega */
 	DRIVER( calorieb )	/* (c) 1986 Sega (but bootleg) */
 
-#elif defined(PS3_SET_8)
+//#elif defined(PS3_SET_8)
 
 	/* Bingo-based games */
 	DRIVER( bingoc )	/* (c) 1989 Sega */
@@ -4609,7 +4609,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( puckpkmna )	/* (c) 2000 IBS */
 	DRIVER( topshoot )	/* (c) 1995 Sun Mixing */
 
-#elif defined(PS3_SET_9)
+//#elif defined(PS3_SET_9)
 	//THIS SET IS TOO LARGE!!!!!!!
 	//40+ MB Loaded :(
 
@@ -4970,7 +4970,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 						/* 2001.10 Dennou Senki Virtual-On Force */
 						/* 2002.04 Dennou Senki Virtual-On Force ver.7.7 */
 
-#elif defined(PS3_SET_12)
+//#elif defined(PS3_SET_12)
 //Set 10 and 11 reserved to cut down set 9
 
 	/* Triforce (GameCube based) */
@@ -5269,7 +5269,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( automat )	/* bootleg */
 	DRIVER( hippodrm )	/* EW (c) 1989 Data East USA (US) */
 	DRIVER( ffantasy )	/* EV (c) 1989 Data East Corporation (Japan) */
-	DRIVER( ffantasya )	/* EV (c) 1989 Data East Corporat#elif defined(PS3_SET_9)ion (Japan) */
+	DRIVER( ffantasya )	/* EV (c) 1989 Data East Corporation (Japan) */
 	DRIVER( ffantasybl )/* bootleg */
 	DRIVER( slyspy )	/* (c) 1989 Data East USA (US) */
 	DRIVER( slyspy2 )	/* (c) 1989 Data East USA (US) */
@@ -5443,7 +5443,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( stadhr96 )	/* MCM (c) 1996 Data East */
 	DRIVER( stadhr96j )	/* MCM (c) 1996 Data East */
 
-#elif defined(PS3_SET_13)
+//#elif defined(PS3_SET_13)
 
 	/* Tehkan / Tecmo games (Tehkan became Tecmo in 1986) */
 	DRIVER( senjyo )	/* (c) 1983 Tehkan */
@@ -5991,7 +5991,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( evilngte )	/* GX810 (c)1998 */
 	DRIVER( hellngt )	/* GX810 (c)1998 */
 
-#elif defined(PS3_SET_14)
+//#elif defined(PS3_SET_14)
 
 	/* Exidy games */
 	DRIVER( carpolo )	/* (c) 1977 */
@@ -6526,7 +6526,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( vcircle )	/* (proto)          (c) 1996 */
 	DRIVER( a51site4 )	/*     ??           (c) 1998 */
 
-#elif defined(PS3_SET_15)
+//#elif defined(PS3_SET_15)
 
 	/* SNK / Rock-ola games */
 	DRIVER( sasuke )	/* [1980] Shin Nihon Kikaku (SNK) */
@@ -6972,7 +6972,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 
 	DRIVER( meijinsn )	/* (c) 1986 SNK */
 
-#elif defined(PS3_SET_16)
+//#elif defined(PS3_SET_16)
 
 	/* Technos games */
 	DRIVER( scregg )	/* TA-0001 (c) 1983 */
@@ -7613,7 +7613,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( olysoc92 )	/* (c) 1992 Seibu */
 	DRIVER( goal92 )	/* bootleg */
 
-#elif defined(PS3_SET_17)
+//#elif defined(PS3_SET_17)
 
 	/* Jaleco games */
 	DRIVER( exerion )	/* (c) 1983 Jaleco */
@@ -8177,7 +8177,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( blmbycaru )	/* (c) 1994 ABM & Gecas - uses same gfx chip as powerins? */
 	DRIVER( watrball )	/* (c) 1996 ABM */
 
-#elif defined(PS3_SET_18)
+//#elif defined(PS3_SET_18)
 
 	/* Sun Electronics / SunSoft games */
 	DRIVER( dai3wksi )	/* 1979.09 Dai San Wakusei (The Third Planet) */
@@ -8769,7 +8769,7 @@ Other Sun games
 	DRIVER( espgal )
 	DRIVER( orleg2 )		/* (c) 2007 */
 
-#elif defined(PS3_SET_19)
+//#elif defined(PS3_SET_19)
 
 	/* Spirit Tech. Corp. */
 	DRIVER( dunhuang )	/* (c) 1995 */
@@ -9113,7 +9113,7 @@ Other Sun games
 	DRIVER( hngmnjpm )	/* (c) 1998 */
 	DRIVER( coronatn )	/* (c) 1999 */
 
-#elif defined(PS3_SET_20)
+//#elif defined(PS3_SET_20)
 
 	/* Other Games */
 	DRIVER( vega )		/* (c) 19?? Olympia? */
@@ -9578,7 +9578,7 @@ Other Sun games
 	DRIVER( funquiz )	/* (c) 198? Funworld */
 	DRIVER( photoply )
 
-#elif defined(PS3_SET_21)
+//#elif defined(PS3_SET_21)
 
 	/* Sandii' */
 	DRIVER( snookr10 )	/* (c) 1998 Sandii' */
@@ -10497,7 +10497,7 @@ Other Sun games
 	DRIVER( island )	/* (c) 2005 */
 	DRIVER( island_2 )	/* (c) 2005 */
 
-#elif defined(PS3_SET_22)
+//#elif defined(PS3_SET_22)
 
 	/* Pirate */
 	//DRIVER( pirate )  /* (c) 2005 */
@@ -12242,6 +12242,6 @@ Other Sun games
 	DRIVER( skijump )
 	DRIVER( spacecty )
 	DRIVER( strike )
-#endif
+//#endif
 
 #endif	/* DRIVER_RECURSIVE */

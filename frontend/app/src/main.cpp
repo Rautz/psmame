@@ -88,12 +88,8 @@ int				main		(int argc, char** argv)
 //On ps3 run mame this way
 			cellFsChmod("/dev_hdd0/game/MAME90000/USRDIR/mame.self", 0777);
 
-			char* launchargv[2];
-			memset(launchargv, 0, sizeof(launchargv));
-
-
-			char* args[] = {"/dev_hdd0/game/MAME90000/USRDIR/mame.self", "-rompath", ROM_DIR, strdup(linelist->GetSelected()->Properties["DRIVER"].c_str()), 0};
-			sys_game_process_exitspawn2("/dev_hdd0/game/MAME90000/USRDIR/mame.self", (const char**)launchargv, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
+			char* args[] = {"-rompath", ROM_DIR, strdup(linelist->GetSelected()->Properties["DRIVER"].c_str()), 0};
+			sys_game_process_exitspawn2("/dev_hdd0/game/MAME90000/USRDIR/mame.self", (const char**)args, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
 #endif
 		}
 
