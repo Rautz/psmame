@@ -311,12 +311,6 @@ int main(int argc, char **argv)
 {
 	int res = 0;
 
-#ifdef __CELLOS_LV2__
-	argc = 4;
-	static char* arggg[] = {"mame", "-rompath", "/dev_hdd0/game/HBMM90000/USRDIR", "mk3"};
-	argv = arggg;
-#endif
-
 #else
 
 /* gee */
