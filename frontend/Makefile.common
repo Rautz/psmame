@@ -1,0 +1,79 @@
+ifeq ($(strip $(BOOST_PATH)),)
+$(error Set BOOST_PATH in environment)
+endif
+
+
+#RULES FOR COMPILE
+%.o: %.c
+	@[ -d $(CURDIR)/paul/ ] || mkdir -p $(CURDIR)/paul
+	@[ -d $(CURDIR)/paul/$(dir $<) ] || mkdir -p $(CURDIR)/paul/$(dir $<)
+	@echo "[CC]  $(notdir $<)"
+	@$(CC) $(DEPSOPTIONS) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+%.o: %.cpp
+	@[ -d $(CURDIR)/paul/ ] || mkdir -p $(CURDIR)/paul
+	@[ -d $(CURDIR)/paul/$(dir $<) ] || mkdir -p $(CURDIR)/paul/$(dir $<)
+	@echo "[CXX] $(notdir $<)"
+	@$(CXX) $(DEPSOPTIONS) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+%.o: %.S
+	@[ -d $(CURDIR)/paul/ ] || mkdir -p $(CURDIR)/paul
+	@[ -d $(CURDIR)/paul/$(dir $<) ] || mkdir -p $(CURDIR)/paul/$(dir $<)
+	@echo "[CC]  $(notdir $<)"
+	@$(CC) $(DEPSOPTIONS) -x assembler-with-cpp $(ASFLAGS) $(INCLUDES) -c $< -o $@
+
+%.so:
+	@echo "[LD]  $(notdir $@)"
+	@$(LD) -shared -Wl,-soname,$(TARGET).so.1 -o $@ $^
+
+%.a:
+	@echo "[AR]  $(notdir $@)"
+	@$(AR) -rcs ../$(TARGET)-$(PLATFORM).a $^
+
+%.elf:
+	@echo "[LD]  $(notdir $@)"
+	@$(LD) $^ $(LIBPATHS) $(LIBS) $(LDFLAGS) -o $@
+
+################
+
+ifneq ($(BUILD)-$(PLATFORM),$(notdir $(CURDIR)))
+
+export OUTPUT	:=	$(CURDIR)/$(TARGET)-$(PLATFORM)
+export VPATH	:=	../
+export BUILDDIR	:=	$(CURDIR)/$(BUILD)-$(PLATFORM)
+export DEPSDIR	:=	$(BUILDDIR)
+
+CFILES		+= $(foreach dir,$(SOURCE),$(wildcard $(dir)/*.c))
+CXXFILES	+= $(foreach dir,$(SOURCE),$(wildcard $(dir)/*.cpp))
+SFILES		+= $(foreach dir,$(SOURCE),$(wildcard $(dir)/*.S))
+
+export OFILES	:=	$(CFILES:.c=.o) $(CXXFILES:.cpp=.o) $(SFILES:.S=.o) 
+export INCLUDES	:=	$(foreach dir,$(INCLUDE),-I$(CURDIR)/$(dir)) -I$(CURDIR)/$(BUILD)-$(PLATFORM) -I$(BOOST_PATH)
+export LIBPATHS :=	$(foreach dir,$(LIBDIRS),-L$(CURDIR)/$(dir))
+
+.PHONY: $(BUILD)-$(PLATFORM) clean
+
+$(BUILD)-$(PLATFORM):
+	@[ -d $@ ] || mkdir -p $@
+	@$(MAKE) --no-print-directory -C $(BUILD)-$(PLATFORM) -f $(CURDIR)/Makefile
+
+clean:
+	@echo Clean...
+	@rm -rf $(BUILD)-$(PLATFORM) $(OUTPUT).a $(OUTPUT).so $(OUTPUT).elf $(OUTPUT).self $(OUTPUT) $(OUTPUT).pkg
+
+
+else
+
+DEPENDS	:= $(OFILES:.o=.d)
+
+OUTTYPE				:=	elf
+ifeq ($(strip $(TYPE)),lib)
+OUTTYPE				:=	a
+endif
+
+$(OUTPUT).$(OUTTYPE): $(OFILES)
+
+-include $(DEPENDS)
+
+endif
+

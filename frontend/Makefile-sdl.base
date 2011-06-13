@@ -1,0 +1,33 @@
+export TOP := $(dir $(lastword $(MAKEFILE_LIST)))
+
+.SUFFIXES:
+
+AR			:= $(PREFIX)ar
+AS			:= $(PREFIX)gcc
+CC			:= $(PREFIX)gcc
+CXX			:= $(PREFIX)g++
+LD			:= $(CXX)
+
+ifeq ($(strip $(SDLCONFIG)),)
+	SDLCONFIG=sdl-config
+endif
+
+ifeq ($(strip $(FREETYPECONFIG)),)
+	FREETYPECONFIG=freetype-config
+endif
+
+CFLAGS		+= -DMDSDL -O1 -g -std=gnu99 `$(FREETYPECONFIG) --cflags` `$(SDLCONFIG) --cflags` -DLSB_FIRST -DSIZEOF_DOUBLE=8 -DHAVE_MKDIR -DWORDS_LITTLEENDIAN -DC_CORE
+CXXFLAGS	+= -DMDSDL -O1 -g `$(FREETYPECONFIG) --cflags` `$(SDLCONFIG) --cflags` -DLSB_FIRST -DSIZEOF_DOUBLE=8 -DHAVE_MKDIR -DWORDS_LITTLEENDIAN -DC_CORE -DGL_GLEXT_PROTOTYPES
+LDFLAGS		+= `$(SDLCONFIG) --static-libs` `$(FREETYPECONFIG) --libs` -lpng -lSDL_net -lz -lm -lCg -lCgGL
+DEPSOPTIONS	=  -MMD -MP -MF $(DEPSDIR)/$*.d
+
+ifeq ($(strip $(TARGETPLATFORM)),windows)
+LDFLAGS		+= -lopengl32
+else
+LDFLAGS		+= -lGL
+endif
+
+###
+include $(TOP)/Makefile.common
+###
+

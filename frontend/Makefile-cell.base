@@ -1,0 +1,41 @@
+export TOP := $(dir $(lastword $(MAKEFILE_LIST)))
+export PATH := $(CELL_SDK)/host-win32/bin:$(CELL_SDK)/host-win32/ppu/bin:$(PATH)
+
+.SUFFIXES:
+
+AR			:=	ppu-lv2-ar
+AS			:=	ppu-lv2-gcc
+CC			:=	ppu-lv2-gcc
+CXX			:=	ppu-lv2-g++
+LD			:=	$(CXX)
+PKG			:=	pkg.py
+MAKE_SELF_GH:= make_self_npdrm
+MAKE_SELF_WC:= make_self_wc
+
+ifeq ($(strip $(FREETYPECONFIG)),)
+	FREETYPECFLAGS	:= -I$(CELL_SDK)/target/ppu/include/freetype2
+	FREETYPELIBS	:= -lfreetype
+else
+	FREETYPECFLAGS	:= `$(FREETYPECONFIG) --cflags`
+	FREETYPELIBS	:= `$(FREETYPECONFIG) --libs`
+endif
+
+CNCXXFLAGS			:= -DMDCELL -g -O2 -pipe -I$(CELL_SDK)/target/ppu/include $(FREETYPECFLAGS)
+CNCXXFLAGS			+= -DMSB_FIRST -DSIZEOF_DOUBLE=8 -DHAVE_MKDIR -DWORDS_BIGENDIAN -D__ppc__ -DC_CORE -D__POWERPC__ -D__BIG_ENDIAN__ -D__BIGENDIAN__
+
+CFLAGS				+= $(CNCXXFLAGS) --std=gnu99 -DPSGL
+CXXFLAGS			+= $(CNCXXFLAGS) -DPSGL
+LDFLAGS				+= -lpng $(FREETYPELIBS) -L$(CELL_SDK)/target/ppu/lib -L$(CELL_SDK)/target/ppu/lib/PSGL/RSX/ultra-opt -lPSGLFX -lPSGL -lPSGLU -lm -lnet_stub -lfs_stub -lio_stub -lsysutil_stub -lsysmodule_stub -lgcm_cmd -lresc_stub -lgcm_sys_stub -laudio_stub -lz -lspurs_stub -lmstreamThreadMP3 -lPSGLcgc -lcgc
+DEPSOPTIONS			=  -MMD -MP -MF $(DEPSDIR)/$*.d
+
+###
+include $(TOP)/Makefile.common
+###
+
+pkg: $(BUILD)-cell
+	@$(CXX) loader/loader.cpp -o loader.elf -lfs_stub
+	@$(MAKE_SELF_GH) loader.elf pkg/USRDIR/EBOOT.BIN UP0001-MAME90000_00-0000000000000000	
+	@$(MAKE_SELF_WC) psmame-cell.elf pkg/USRDIR/frontend.elf
+	@$(MAKE_SELF_WC) ../../mamesets/mame-1.elf pkg/USRDIR/mame.self
+	@$(PKG) --contentid $(CONTENTID) pkg/ $(OUTPUT).pkg
+	
