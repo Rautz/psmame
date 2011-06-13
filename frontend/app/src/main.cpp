@@ -8,9 +8,11 @@ void			Exit		()
 #ifdef __CELLOS_LV2__
 # define	ROM_DIR		"/dev_hdd0/game/MAME90000/USRDIR/ROMS"
 # define	GAME_LIST	"/dev_hdd0/game/MAME90000/USRDIR/games.txt"
+# define	LOG_FILE	"/dev_hdd0/game/MAME90000/USRDIR/mame.log"
 #else
 # define	ROM_DIR		"./ROMS"
 # define	GAME_LIST	"./games.txt"
+# define	LOG_FILE	"./mame.log"
 #endif
 
 void			LoadGameList		(const std::string& aFile, std::map<std::string, std::string>& aGames)
@@ -45,6 +47,13 @@ int				main		(int argc, char** argv)
 	try
 	{
 		InitES(Exit);
+
+		if(argc > 1 && strcmp(argv[1], "-showlog") == 0)
+		{
+			boost::shared_ptr<TextViewer> tview = boost::make_shared<TextViewer>(Area(10, 10, 80, 80), LOG_FILE);
+			tview->SetHeader("MAME Log");
+			Summerface::Create("Viewer", tview)->Do();
+		}
 
 		std::map<std::string, std::string> gameList;
 		LoadGameList(GAME_LIST, gameList);
