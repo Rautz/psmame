@@ -25,7 +25,7 @@ CNCXXFLAGS			+= -DMSB_FIRST -DSIZEOF_DOUBLE=8 -DHAVE_MKDIR -DWORDS_BIGENDIAN -D_
 
 CFLAGS				+= $(CNCXXFLAGS) --std=gnu99 -DPSGL
 CXXFLAGS			+= $(CNCXXFLAGS) -DPSGL
-LDFLAGS				+= -lpng $(FREETYPELIBS) -L$(CELL_SDK)/target/ppu/lib -L$(CELL_SDK)/target/ppu/lib/PSGL/RSX/ultra-opt -lPSGLFX -lPSGL -lPSGLU -lm -lnet_stub -lfs_stub -lio_stub -lsysutil_stub -lsysmodule_stub -lgcm_cmd -lresc_stub -lgcm_sys_stub -laudio_stub -lz -lspurs_stub -lmstreamThreadMP3 -lPSGLcgc -lcgc
+LDFLAGS				+= -lpng $(FREETYPELIBS) -L$(CELL_SDK)/target/ppu/lib -L$(CELL_SDK)/target/ppu/lib/PSGL/RSX/ultra-opt -lPSGL -lm -lfs_stub -lio_stub -lsysutil_stub -lsysmodule_stub -lgcm_cmd -lresc_stub -lgcm_sys_stub -lz 
 DEPSOPTIONS			=  -MMD -MP -MF $(DEPSDIR)/$*.d
 
 ###
