@@ -35,10 +35,13 @@ void				ESSUB_Init				()
 			break;
 		}
 	}
+
+	cellSysmoduleLoadModule(CELL_SYSMODULE_FS);
 }
 
 void				ESSUB_Quit				()
 {
+	cellSysmoduleUnloadModule(CELL_SYSMODULE_FS);
 	cellSysutilUnregisterCallback(0);
 }
 
