@@ -15,6 +15,7 @@
 
 #ifdef __CELLOS_LV2__
 #include <sys/process.h>
+extern bool QuitThruSDL;
 SYS_PROCESS_PARAM(1001, 1024 * 1024);
 #endif
 
@@ -401,9 +402,20 @@ int main(int argc, char *argv[])
 	#endif
 	#endif
 
+#ifndef __CELLOS_LV2__
 	exit(res);
-
 	return res;
+#else
+	if(!QuitThruSDL)
+	{
+		sys_game_process_exitspawn2("/dev_hdd0/game/MAME90000/USRDIR/frontend.self", NULL, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
+	}
+	else
+	{
+		exit(res);
+		return res;
+	}
+#endif
 }
 
 

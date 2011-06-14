@@ -34,6 +34,10 @@
 #undef DELETE
 #endif
 
+#ifdef __CELLOS_LV2__
+bool QuitThruSDL;
+#endif
+
 //============================================================
 //  PARAMETERS
 //============================================================
@@ -1466,6 +1470,9 @@ void sdlinput_poll(running_machine &machine)
 			}
 			break;
 		case SDL_QUIT:
+#ifdef __CELLOS_LV2__
+			QuitThruSDL = true;
+#endif
 			machine.schedule_exit();
 			break;
 		case SDL_VIDEORESIZE:
