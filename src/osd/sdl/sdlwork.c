@@ -8,9 +8,9 @@
 //  SDLMAME by Olivier Galibert and R. Belmont
 //
 //============================================================
+//TODO: With guaranteed one proc is it better to not use threads? Otherwise I'm not touching this...
 
 #if defined(SDLMAME_NOASM)
-
 /* must be exported
  * FIXME: NOASM should be taken care of in sdlsync.c
  *        This is not really a sound solution.
@@ -29,38 +29,18 @@ int sdl_num_processors = 0;
 
 #include "eminline.h"
 
-
-//============================================================
-//  DEBUGGING
-//============================================================
-
-#define KEEP_STATISTICS			(0)
-
 //============================================================
 //  PARAMETERS
 //============================================================
-
-#define SDLENV_PROCESSORS				"OSDPROCESSORS"
-#define SDLENV_CPUMASKS					"OSDCPUMASKS"
-
 #define INFINITE				(osd_ticks_per_second() *  (osd_ticks_t) 10000)
 #define SPIN_LOOP_TIME			(osd_ticks_per_second() / 10000)
-
 
 //============================================================
 //  MACROS
 //============================================================
-
-#if KEEP_STATISTICS
-#define add_to_stat(v,x)		do { atomic_add32((v), (x)); } while (0)
-#define begin_timing(v)			do { (v) -= get_profile_ticks(); } while (0)
-#define end_timing(v)			do { (v) += get_profile_ticks(); } while (0)
-#else
 #define add_to_stat(v,x)		do { } while (0)
 #define begin_timing(v)			do { } while (0)
 #define end_timing(v)			do { } while (0)
-#endif
-
 
 
 //============================================================
@@ -74,14 +54,6 @@ struct _work_thread_info
 	osd_thread *		handle;			// handle to the thread
 	osd_event *			wakeevent;		// wake event for the thread
 	volatile INT32		active;			// are we actively processing work?
-
-#if KEEP_STATISTICS
-	INT32				itemsdone;
-	osd_ticks_t			actruntime;
-	osd_ticks_t			runtime;
-	osd_ticks_t			spintime;
-	osd_ticks_t			waittime;
-#endif
 };
 
 
@@ -99,13 +71,6 @@ struct _osd_work_queue
 	UINT32				flags;			// creation flags
 	work_thread_info *	thread;			// array of thread information
 	osd_event	*		doneevent;		// event signalled when work is complete
-
-#if KEEP_STATISTICS
-	volatile INT32		itemsqueued;	// total items queued
-	volatile INT32		setevents;		// number of times we called SetEvent
-	volatile INT32		extraitems;		// how many extra items we got after the first in the queue loop
-	volatile INT32		spinloops;		// how many times spinning bought us more items
-#endif
 };
 
 
@@ -337,22 +302,6 @@ void osd_work_queue_free(osd_work_queue *queue)
 			if (thread->wakeevent != NULL)
 				osd_event_free(thread->wakeevent);
 		}
-
-#if KEEP_STATISTICS
-		// output per-thread statistics
-		for (threadnum = 0; threadnum <= queue->threads; threadnum++)
-		{
-			work_thread_info *thread = &queue->thread[threadnum];
-			osd_ticks_t total = thread->runtime + thread->waittime + thread->spintime;
-			printf("Thread %d:  items=%9d run=%5.2f%% (%5.2f%%)  spin=%5.2f%%  wait/other=%5.2f%% total=%9d\n",
-					threadnum, thread->itemsdone,
-					(double)thread->runtime * 100.0 / (double)total,
-					(double)thread->actruntime * 100.0 / (double)total,
-					(double)thread->spintime * 100.0 / (double)total,
-					(double)thread->waittime * 100.0 / (double)total,
-					(UINT32) total);
-		}
-#endif
 	}
 
 	// free the list
@@ -382,13 +331,6 @@ void osd_work_queue_free(osd_work_queue *queue)
 			osd_event_free(item->event);
 		osd_free(item);
 	}
-
-#if KEEP_STATISTICS
-	printf("Items queued   = %9d\n", queue->itemsqueued);
-	printf("SetEvent calls = %9d\n", queue->setevents);
-	printf("Extra items    = %9d\n", queue->extraitems);
-	printf("Spin loops     = %9d\n", queue->spinloops);
-#endif
 
 	osd_scalable_lock_free(queue->lock);
 	// free the queue itself
@@ -712,3 +654,4 @@ static void worker_thread_process(osd_work_queue *queue, work_thread_info *threa
 }
 
 #endif // SDLMAME_NOASM
+

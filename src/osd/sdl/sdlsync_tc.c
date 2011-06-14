@@ -13,15 +13,10 @@
 #define _GNU_SOURCE 	// for PTHREAD_MUTEX_RECURSIVE; needs to be here before other glibc headers are included
 #endif
 
-#include "SDL/SDL.h"
-
-#ifdef SDLMAME_MACOSX
-#include <mach/mach.h>
-#endif
-
 // standard C headers
 #include <math.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 // MAME headers
 #include "osdcomm.h"
@@ -31,9 +26,6 @@
 
 #include <pthread.h>
 #include <errno.h>
-#ifndef __CELLOS_LV2__
-#include <signal.h>
-#endif
 #include <sys/time.h>
 
 typedef struct _hidden_mutex_t hidden_mutex_t;
@@ -56,7 +48,6 @@ struct _osd_event {
 //============================================================
 //  TYPE DEFINITIONS
 //============================================================
-
 struct _osd_thread {
 	pthread_t			thread;
 };
@@ -69,7 +60,6 @@ struct _osd_scalable_lock
 //============================================================
 //  Scalable Locks
 //============================================================
-
 osd_scalable_lock *osd_scalable_lock_alloc(void)
 {
 	osd_scalable_lock *lock;
@@ -310,7 +300,6 @@ int osd_event_wait(osd_event *event, osd_ticks_t timeout)
 //============================================================
 //  osd_thread_create
 //============================================================
-
 osd_thread *osd_thread_create(osd_thread_callback callback, void *cbparam)
 {
 	osd_thread *thread;
@@ -319,73 +308,43 @@ osd_thread *osd_thread_create(osd_thread_callback callback, void *cbparam)
 	thread = (osd_thread *)calloc(1, sizeof(osd_thread));
 	pthread_attr_init(&attr);
 	pthread_attr_setinheritsched(&attr, PTHREAD_INHERIT_SCHED);
-	if ( pthread_create(&thread->thread, &attr, callback, cbparam) != 0 )
+	if(pthread_create(&thread->thread, &attr, callback, cbparam) != 0)
 	{
 		free(thread);
 		return NULL;
 	}
+
 	return thread;
 }
 
 //============================================================
 //  osd_thread_adjust_priority
 //============================================================
-
 int osd_thread_adjust_priority(osd_thread *thread, int adjust)
 {
 	struct sched_param	sched;
 	int					policy;
 
-	if ( pthread_getschedparam( thread->thread, &policy, &sched ) == 0 )
+	if(0 == pthread_getschedparam(thread->thread, &policy, &sched))
 	{
 		sched.sched_priority += adjust;
-		if ( pthread_setschedparam(thread->thread, policy, &sched ) == 0)
-			return TRUE;
-		else
-			return FALSE;
+		return 0 == pthread_setschedparam(thread->thread, policy, &sched);
 	}
-	else
-		return FALSE;
+
+	return FALSE;
 }
 
 //============================================================
 //  osd_thread_cpu_affinity
 //============================================================
-
 int osd_thread_cpu_affinity(osd_thread *thread, UINT32 mask)
 {
-#if !defined(NO_AFFINITY_NP) && !defined(__CELLOS_LV2__)
-	cpu_set_t	cmask;
-	pthread_t	lthread;
-	int			bitnum;
-
-	CPU_ZERO(&cmask);
-	for (bitnum=0; bitnum<32; bitnum++)
-		if (mask & (1<<bitnum))
-			CPU_SET(bitnum, &cmask);
-
-	if (thread == NULL)
-		lthread = pthread_self();
-	else
-		lthread = thread->thread;
-
-	if (pthread_setaffinity_np(lthread, sizeof(cmask), &cmask) <0)
-	{
-		/* Not available during link in all targets */
-		fprintf(stderr, "error %d setting cpu affinity to mask %08x", errno, mask);
-		return FALSE;
-	}
-	else
-		return TRUE;
-#else
 	return TRUE;
-#endif
 }
 
 //============================================================
 //  osd_thread_wait_free
 //============================================================
-
 void osd_thread_wait_free(osd_thread *thread)
 {
 	pthread_join(thread->thread, NULL);
@@ -398,3 +357,4 @@ void osd_thread_wait_free(osd_thread *thread)
 void osd_process_kill(void)
 {
 }
+
