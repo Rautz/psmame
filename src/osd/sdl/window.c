@@ -84,9 +84,7 @@ static sdl_window_info **last_window_ptr;
 static int multithreading_enabled;
 static osd_work_queue *work_queue;
 
-#if !(SDL_VERSION_ATLEAST(1,3,0))
 typedef int SDL_threadID;
-#endif
 
 static SDL_threadID main_threadid;
 static SDL_threadID window_threadid;
@@ -184,11 +182,7 @@ static OSDWORK_CALLBACK(sdlwindow_thread_id)
 
 	if (SDLMAME_INIT_IN_WORKER_THREAD)
 	{
-#if (SDL_VERSION_ATLEAST(1,3,0))
-		if (SDL_InitSubSystem(SDL_INIT_TIMER|SDL_INIT_AUDIO| SDL_INIT_VIDEO| SDL_INIT_JOYSTICK|SDL_INIT_NOPARACHUTE))
-#else
 		if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_AUDIO| SDL_INIT_VIDEO| SDL_INIT_JOYSTICK|SDL_INIT_NOPARACHUTE))
-#endif
 		{
 			mame_printf_error("Could not initialize SDL: %s.\n", SDL_GetError());
 			exit(-1);
@@ -232,20 +226,6 @@ int sdlwindow_init(running_machine &machine)
 	}
 
 	// initialize the drawers
-#if USE_OPENGL
-	if (video_config.mode == VIDEO_MODE_OPENGL)
-	{
-		if (drawogl_init(machine, &draw))
-			video_config.mode = VIDEO_MODE_SOFT;
-	}
-#endif
-#if	SDL_VERSION_ATLEAST(1,3,0)
-	if (video_config.mode == VIDEO_MODE_SDL13)
-	{
-		if (draw13_init(machine, &draw))
-			video_config.mode = VIDEO_MODE_SOFT;
-	}
-#endif
 	if (video_config.mode == VIDEO_MODE_SOFT)
 	{
 		if (drawsdl_init(&draw))
@@ -407,8 +387,7 @@ void sdlwindow_blit_surface_size(sdl_window_info *window, int window_width, int 
 	}
 
     //FIXME: really necessary to distinguish for yuv_modes ?
-	if (window->target->zoom_to_screen()
-		&& (window->scale_mode == VIDEO_SCALE_MODE_NONE ))
+	if (window->target->zoom_to_screen())
 		newwidth = window_width;
 
 	if ((window->blitwidth != newwidth) || (window->blitheight != newheight))
@@ -553,41 +532,6 @@ static OSDWORK_CALLBACK( destroy_all_textures_wt )
 	return NULL;
 }
 
-void sdlwindow_modify_prescale(running_machine &machine, sdl_window_info *window, int dir)
-{
-	worker_param wp;
-	int new_prescale = window->prescale;
-
-	clear_worker_param(&wp);
-
-	wp.window = window;
-	wp.m_machine = &machine;
-
-	if (dir > 0 && window->prescale < 3)
-		new_prescale = window->prescale + 1;
-	if (dir < 0 && window->prescale > 1)
-		new_prescale = window->prescale - 1;
-
-	if (new_prescale != window->prescale)
-	{
-		if (window->fullscreen && video_config.switchres)
-		{
-			execute_async_wait(&sdlwindow_video_window_destroy_wt, &wp);
-
-			window->prescale = new_prescale;
-
-			execute_async_wait(&complete_create_wt, &wp);
-
-		}
-		else
-		{
-			execute_async_wait(destroy_all_textures_wt, &wp);
-			window->prescale = new_prescale;
-		}
-		ui_popup_time(1, "Prescale %d", window->prescale);
-	}
-}
-
 //============================================================
 //  sdlwindow_update_cursor_state
 //  (main or window thread)
@@ -595,30 +539,6 @@ void sdlwindow_modify_prescale(running_machine &machine, sdl_window_info *window
 
 static void sdlwindow_update_cursor_state(running_machine &machine, sdl_window_info *window)
 {
-#if (SDL_VERSION_ATLEAST(1,3,0))
-	// do not do mouse capture if the debugger's enabled to avoid
-	// the possibility of losing control
-	if (!(machine.debug_flags & DEBUG_FLAG_OSD_ENABLED))
-	{
-		//FIXME: SDL1.3: really broken: the whole SDL code
-		//       will only work correct with relative mouse movements ...
-		//SDL_SetRelativeMouseMode
-		if (!window->fullscreen && !sdlinput_should_hide_mouse(machine))
-		{
-			SDL_ShowCursor(SDL_ENABLE);
-			if (SDL_GetWindowGrab(window->sdl_window ))
-				SDL_SetWindowGrab(window->sdl_window, SDL_FALSE);
-		}
-		else
-		{
-			SDL_ShowCursor(SDL_DISABLE);
-			if (!SDL_GetWindowGrab(window->sdl_window))
-				SDL_SetWindowGrab(window->sdl_window, SDL_TRUE);
-		}
-		SDL_SetCursor(NULL); // Force an update in case the underlying driver has changed visibility
-	}
-
-#else
 	// do not do mouse capture if the debugger's enabled to avoid
 	// the possibility of losing control
 	if (!(machine.debug_flags & DEBUG_FLAG_OSD_ENABLED))
@@ -640,7 +560,6 @@ static void sdlwindow_update_cursor_state(running_machine &machine, sdl_window_i
 			}
 		}
 	}
-#endif
 }
 
 
@@ -671,8 +590,6 @@ int sdlwindow_video_window_create(running_machine &machine, int index, sdl_monit
 
 	//FIXME: these should be per_window in config-> or even better a bit set
 	window->fullscreen = !video_config.windowed;
-	window->prescale = video_config.prescale;
-	window->scale_mode = video_config.scale_mode;
 
 	// set the initial maximized state
 	// FIXME: Does not belong here
@@ -797,75 +714,6 @@ static void sdlwindow_video_window_destroy(running_machine &machine, sdl_window_
 //============================================================
 //  pick_best_mode
 //============================================================
-
-#if SDL_VERSION_ATLEAST(1,3,0)
-static void pick_best_mode(sdl_window_info *window, int *fswidth, int *fsheight)
-{
-	int minimum_width, minimum_height, target_width, target_height;
-	int i;
-	int num;
-	float size_score, best_score = 0.0f;
-
-	// determine the minimum width/height for the selected target
-	window->target->compute_minimum_size(minimum_width, minimum_height);
-
-	// use those as the target for now
-	target_width = minimum_width * MAX(1, window->prescale);
-	target_height = minimum_height * MAX(1, window->prescale);
-
-	// if we're not stretching, allow some slop on the minimum since we can handle it
-	{
-		minimum_width -= 4;
-		minimum_height -= 4;
-	}
-
-	num = SDL_GetNumDisplayModes(window->monitor->handle);
-
-	if (num == 0)
-	{
-		mame_printf_error("SDL: No modes available?!\n");
-		exit(-1);
-	}
-	else
-	{
-		for (i = 0; i < num; ++i)
-		{
-			SDL_DisplayMode mode;
-			SDL_GetDisplayMode(window->monitor->handle, i, &mode);
-
-			// compute initial score based on difference between target and current
-			size_score = 1.0f / (1.0f + fabsf((INT32)mode.w - target_width) + fabsf((INT32)mode.h - target_height));
-
-			// if the mode is too small, give a big penalty
-			if (mode.w < minimum_width || mode.h < minimum_height)
-				size_score *= 0.01f;
-
-			// if mode is smaller than we'd like, it only scores up to 0.1
-			if (mode.w < target_width || mode.h < target_height)
-				size_score *= 0.1f;
-
-			// if we're looking for a particular mode, that's a winner
-			if (mode.w == window->maxwidth && mode.h == window->maxheight)
-				size_score = 2.0f;
-
-			// refresh adds some points
-			if (window->refresh)
-				size_score *= 1.0f / (1.0f + fabsf(window->refresh - mode.refresh_rate) / 10.0f);
-
-			mame_printf_verbose("%4dx%4d@%2d -> %f\n", (int)mode.w, (int)mode.h, (int) mode.refresh_rate, size_score);
-
-			// best so far?
-			if (size_score > best_score)
-			{
-				best_score = size_score;
-				*fswidth = mode.w;
-				*fsheight = mode.h;
-			}
-
-		}
-	}
-}
-#else
 static void pick_best_mode(sdl_window_info *window, int *fswidth, int *fsheight)
 {
 	int minimum_width, minimum_height, target_width, target_height;
@@ -877,8 +725,8 @@ static void pick_best_mode(sdl_window_info *window, int *fswidth, int *fsheight)
 	window->target->compute_minimum_size(minimum_width, minimum_height);
 
 	// use those as the target for now
-	target_width = minimum_width * MAX(1, window->prescale);
-	target_height = minimum_height * MAX(1, window->prescale);
+	target_width = minimum_width;
+	target_height = minimum_height;
 
 	// if we're not stretching, allow some slop on the minimum since we can handle it
 	{
@@ -939,16 +787,14 @@ static void pick_best_mode(sdl_window_info *window, int *fswidth, int *fsheight)
 		}
 	}
 }
-#endif
+
 
 //============================================================
 //  sdlwindow_video_window_update
 //  (main thread)
 //============================================================
-
 void sdlwindow_video_window_update(running_machine &machine, sdl_window_info *window)
 {
-
 	osd_ticks_t		event_wait_ticks;
 	ASSERT_MAIN_THREAD();
 

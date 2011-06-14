@@ -27,7 +27,6 @@
 #define SDLOPTION_KEEPASPECT			"keepaspect"
 #define SDLOPTION_WINDOW				"window"
 #define SDLOPTION_NUMSCREENS			"numscreens"
-#define SDLOPTION_UNEVENSTRETCH			"unevenstretch"
 #define SDLOPTION_USEALLHEADS			"useallheads"
 #define SDLOPTION_MAXIMIZE				"maximize"
 #define SDLOPTION_VIDEO					"video"
@@ -35,13 +34,9 @@
 #define SDLOPTION_FILTER				"filter"
 #define SDLOPTION_CENTERH				"centerh"
 #define SDLOPTION_CENTERV				"centerv"
-#define SDLOPTION_PRESCALE				"prescale"
-
-#define SDLOPTION_SCALEMODE				"scalemode"
 
 #define SDLOPTION_MULTITHREADING		"multithreading"
 #define SDLOPTION_BENCH					"bench"
-#define SDLOPTION_NUMPROCESSORS			"numprocessors"
 
 #define SDLOPTION_WAITVSYNC				"waitvsync"
 #define SDLOPTION_SYNCREFRESH			"syncrefresh"
@@ -91,7 +86,6 @@ public:
 
 	// performance options
 	bool multithreading() const { return bool_value(SDLOPTION_MULTITHREADING); }
-	const char *numprocessors() const { return value(SDLOPTION_NUMPROCESSORS); }
 	bool video_fps() const { return bool_value(SDLOPTION_SDLVIDEOFPS); }
 	int bench() const { return int_value(SDLOPTION_BENCH); }
 
@@ -101,12 +95,10 @@ public:
 	bool window() const { return bool_value(SDLOPTION_WINDOW); }
 	bool maximize() const { return bool_value(SDLOPTION_MAXIMIZE); }
 	bool keep_aspect() const { return bool_value(SDLOPTION_KEEPASPECT); }
-	bool uneven_stretch() const { return bool_value(SDLOPTION_UNEVENSTRETCH); }
 	bool centerh() const { return bool_value(SDLOPTION_CENTERH); }
 	bool centerv() const { return bool_value(SDLOPTION_CENTERV); }
 	bool wait_vsync() const { return bool_value(SDLOPTION_WAITVSYNC); }
 	bool sync_refresh() const { return bool_value(SDLOPTION_SYNCREFRESH); }
-	const char *scale_mode() const { return value(SDLOPTION_SCALEMODE); }
 
 	// per-window options
 	const char *screen() const { return value(SDLOPTION_SCREEN); }

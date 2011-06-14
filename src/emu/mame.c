@@ -259,10 +259,6 @@ void mame_null_output_callback(void *param, const char *format, va_list argptr)
     appropriate callback
 -------------------------------------------------*/
 
-#ifdef __CELLOS_LV2__
-void	CELL_Log(const char* aFormat, va_list aArgs);
-#endif
-
 void mame_printf_error(const char *format, ...)
 {
 	va_list argptr;
@@ -278,13 +274,6 @@ void mame_printf_error(const char *format, ...)
 	va_start(argptr, format);
 	(*output_cb[OUTPUT_CHANNEL_ERROR])(output_cb_param[OUTPUT_CHANNEL_ERROR], format, argptr);
 	va_end(argptr);
-
-#ifdef __CELLOS_LV2__
-	va_start(argptr, format);
-	CELL_Log(format, argptr);
-	va_end(argptr);
-#endif
-
 }
 
 
@@ -308,12 +297,6 @@ void mame_printf_warning(const char *format, ...)
 	va_start(argptr, format);
 	(*output_cb[OUTPUT_CHANNEL_WARNING])(output_cb_param[OUTPUT_CHANNEL_WARNING], format, argptr);
 	va_end(argptr);
-
-#ifdef __CELLOS_LV2__
-	va_start(argptr, format);
-	CELL_Log(format, argptr);
-	va_end(argptr);
-#endif
 }
 
 
@@ -337,12 +320,6 @@ void mame_printf_info(const char *format, ...)
 	va_start(argptr, format);
 	(*output_cb[OUTPUT_CHANNEL_INFO])(output_cb_param[OUTPUT_CHANNEL_INFO], format, argptr);
 	va_end(argptr);
-
-#ifdef __CELLOS_LV2__
-	va_start(argptr, format);
-	CELL_Log(format, argptr);
-	va_end(argptr);
-#endif
 }
 
 
@@ -370,12 +347,6 @@ void mame_printf_verbose(const char *format, ...)
 	va_start(argptr, format);
 	(*output_cb[OUTPUT_CHANNEL_VERBOSE])(output_cb_param[OUTPUT_CHANNEL_VERBOSE], format, argptr);
 	va_end(argptr);
-
-#ifdef __CELLOS_LV2__
-	va_start(argptr, format);
-	CELL_Log(format, argptr);
-	va_end(argptr);
-#endif
 }
 
 
@@ -404,12 +375,6 @@ void mame_printf_debug(const char *format, ...)
 	va_start(argptr, format);
 	(*output_cb[OUTPUT_CHANNEL_DEBUG])(output_cb_param[OUTPUT_CHANNEL_DEBUG], format, argptr);
 	va_end(argptr);
-
-#ifdef __CELLOS_LV2__
-	va_start(argptr, format);
-	CELL_Log(format, argptr);
-	va_end(argptr);
-#endif
 }
 
 
@@ -434,12 +399,6 @@ void mame_printf_log(const char *format, ...)
 	va_start(argptr, format);
 	(*output_cb[OUTPUT_CHANNEL_LOG])(output_cb_param[OUTPUT_CHANNEL_LOG], format, argptr);
 	va_end(argptr);
-
-#ifdef __CELLOS_LV2__
-	va_start(argptr, format);
-	CELL_Log(format, argptr);
-	va_end(argptr);
-#endif
 }
 #endif
 

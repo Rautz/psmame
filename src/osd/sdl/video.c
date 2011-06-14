@@ -331,12 +331,6 @@ static void check_osd_inputs(running_machine &machine)
 		video_config.keepaspect = !video_config.keepaspect;
 		ui_popup_time(1, "Keepaspect %s", video_config.keepaspect? "enabled":"disabled");
 	}
-
-	if (ui_input_pressed(machine, IPT_OSD_6))
-		sdlwindow_modify_prescale(machine, window, -1);
-
-	if (ui_input_pressed(machine, IPT_OSD_7))
-		sdlwindow_modify_prescale(machine, window, 1);
 }
 
 //============================================================
@@ -404,20 +398,6 @@ static void extract_video_config(running_machine &machine)
 	{
 		mame_printf_warning("Invalid numscreens value %d; reverting to 1\n", video_config.numscreens);
 		video_config.numscreens = 1;
-	}
-
-	// yuv settings ...
-	stemp = options.scale_mode();
-	video_config.scale_mode = drawsdl_scale_mode(stemp);
-	if (video_config.scale_mode < 0)
-	{
-		mame_printf_warning("Invalid yuvmode value %s; reverting to none\n", stemp);
-		video_config.scale_mode = VIDEO_SCALE_MODE_NONE;
-	}
-	if ( (video_config.mode != VIDEO_MODE_SOFT) && (video_config.scale_mode != VIDEO_SCALE_MODE_NONE) )
-	{
-		mame_printf_warning("scalemode is only for -video soft, overriding\n");
-		video_config.scale_mode = VIDEO_SCALE_MODE_NONE;
 	}
 }
 

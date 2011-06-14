@@ -19,8 +19,6 @@ extern bool QuitThruSDL;
 SYS_PROCESS_PARAM(1001, 1024 * 1024);
 #endif
 
-#include <SDL/SDL_ttf.h>
-
 // standard includes
 #ifdef MESS
 #include <unistd.h>
@@ -70,29 +68,19 @@ const options_entry sdl_options::s_option_entries[] =
 	// performance options
 	{ NULL,                                   NULL,       OPTION_HEADER,     "PERFORMANCE OPTIONS" },
 	{ SDLOPTION_MULTITHREADING ";mt",         "0",        OPTION_BOOLEAN,    "enable multithreading; this enables rendering and blitting on a separate thread" },
-	{ SDLOPTION_NUMPROCESSORS ";np",         "auto",      OPTION_INTEGER,	 "number of processors; this overrides the number the system reports" },
 	{ SDLOPTION_SDLVIDEOFPS,                  "0",        OPTION_BOOLEAN,    "show sdl video performance" },
 	{ SDLOPTION_BENCH,                        "0",        OPTION_INTEGER,    "benchmark for the given number of emulated seconds; implies -video none -nosound -nothrottle" },
 	// video options
 	{ NULL,                                   NULL,       OPTION_HEADER,     "VIDEO OPTIONS" },
-// OS X can be trusted to have working hardware OpenGL, so default to it on for the best user experience
 	{ SDLOPTION_VIDEO,                   SDLOPTVAL_SOFT,  OPTION_STRING,     "video output method: soft or opengl" },
 	{ SDLOPTION_NUMSCREENS,                   "1",        OPTION_INTEGER,    "number of screens to create; SDLMAME only supports 1 at this time" },
-//ROBO
 	{ SDLOPTION_WINDOW ";w",                  "1",        OPTION_BOOLEAN,    "enable window mode; otherwise, full screen mode is assumed" },
-//ROBO
 	{ SDLOPTION_MAXIMIZE ";max",              "0",        OPTION_BOOLEAN,    "default to maximized windows; otherwise, windows will be minimized" },
-//ROBO
 	{ SDLOPTION_KEEPASPECT ";ka",             "0",        OPTION_BOOLEAN,    "constrain to the proper aspect ratio" },
-//ROBO
-	{ SDLOPTION_UNEVENSTRETCH ";ues",         "0",        OPTION_BOOLEAN,    "allow non-integer stretch factors" },
 	{ SDLOPTION_CENTERH,                      "1",        OPTION_BOOLEAN,    "center horizontally within the view area" },
 	{ SDLOPTION_CENTERV,                      "1",        OPTION_BOOLEAN,    "center vertically within the view area" },
-	#if (SDL_VERSION_ATLEAST(1,2,10))
 	{ SDLOPTION_WAITVSYNC,                    "0",        OPTION_BOOLEAN,    "enable waiting for the start of VBLANK before flipping screens; reduces tearing effects" },
 	{ SDLOPTION_SYNCREFRESH,                  "0",        OPTION_BOOLEAN,    "enable using the start of VBLANK for throttling instead of the game time" },
-	#endif
-	{ SDLOPTION_SCALEMODE ";sm",         SDLOPTVAL_NONE,  OPTION_STRING,     "Scale mode: none, async, yv12, yuy2, yv12x2, yuy2x2 (-video soft only)" },
 
 	// per-window options
 	{ NULL,                                   NULL,             OPTION_HEADER,    "PER-WINDOW VIDEO OPTIONS" },
@@ -157,7 +145,6 @@ const options_entry sdl_options::s_option_entries[] =
 //============================================================
 //  sdl_options
 //============================================================
-
 sdl_options::sdl_options()
 {
 	add_entries(s_option_entries);
@@ -167,60 +154,22 @@ sdl_options::sdl_options()
 //============================================================
 //  main
 //============================================================
-#ifdef __CELLOS_LV2__
 #include <SDL_cellhacks.h>
-static FILE* CELL_LogFile;
-void	CELL_Log(const char* aFormat, va_list aArgs)
-{
-	if(!CELL_LogFile)
-	{
-		CELL_LogFile = fopen("/dev_hdd0/game/MAME90000/USRDIR/mame.log", "w");
-	}
-
-	vfprintf(CELL_LogFile, aFormat, aArgs);
-}
-#endif
 
 int main(int argc, char **argv)
 {
-	int res = 0;
-
-#ifdef __CELLOS_LV2__
 	CELL_RC_SetFile("/dev_hdd0/game/MAME90000/USRDIR/sdcellrc");
-#endif
 
-	// disable I/O buffering
+	// disable I/O buffering (Useful?)
 	setvbuf(stdout, (char *) NULL, _IONBF, 0);
 	setvbuf(stderr, (char *) NULL, _IONBF, 0);
 
-	if (TTF_Init() == -1)
-	{
-		printf("SDL_ttf failed: %s\n", TTF_GetError());
-	}
+	//Run MAME
+	sdl_osd_interface osd;
+	sdl_options options;
+	int res = cli_execute(options, osd, argc, argv);
 
-	{
-		sdl_osd_interface osd;
-		sdl_options options;
-		res = cli_execute(options, osd, argc, argv);
-	}
-
-#ifdef MALLOC_DEBUG
-	{
-		void check_unfreed_mem(void);
-		check_unfreed_mem();
-	}
-#endif
-
-	// already called...
-	//SDL_Quit();
-
-	TTF_Quit();
-
-	if(CELL_LogFile)
-	{
-		fclose(CELL_LogFile);
-	}
-
+	//Leave
 	if(!QuitThruSDL)
 	{
 		const char* args[2] = {"-showlog", 0};
@@ -238,7 +187,6 @@ int main(int argc, char **argv)
 //============================================================
 static void output_oslog(running_machine &machine, const char *buffer)
 {
-	fputs(buffer, stderr);
 }
 
 //============================================================
@@ -261,7 +209,6 @@ sdl_osd_interface::~sdl_osd_interface()
 //============================================================
 void sdl_osd_interface::osd_exit(running_machine &machine)
 {
-
 	if (!SDLMAME_INIT_IN_WORKER_THREAD)
 		SDL_Quit();
 }
@@ -275,7 +222,6 @@ void sdl_osd_interface::init(running_machine &machine)
 	osd_interface::init(machine);
 
 	sdl_options &options = downcast<sdl_options &>(machine.options());
-	const char *stemp;
 
 	// determine if we are benchmarking, and adjust options appropriately
 	int bench = options.bench();
@@ -287,21 +233,6 @@ void sdl_osd_interface::init(running_machine &machine)
 		options.set_value(SDLOPTION_VIDEO, "none", OPTION_PRIORITY_MAXIMUM, error_string);
 		options.set_value(OPTION_SECONDS_TO_RUN, bench, OPTION_PRIORITY_MAXIMUM, error_string);
 		assert(!error_string);
-	}
-
-	/* get number of processors */
-	stemp = options.numprocessors();
-
-	sdl_num_processors = 0;
-
-	if (strcmp(stemp, "auto") != 0)
-	{
-		sdl_num_processors = atoi(stemp);
-		if (sdl_num_processors < 1)
-		{
-			mame_printf_warning("Warning: numprocessors < 1 doesn't make much sense. Assuming auto ...\n");
-			sdl_num_processors = 0;
-		}
 	}
 
 	/* Initialize SDL */
@@ -348,165 +279,19 @@ void sdl_osd_interface::init(running_machine &machine)
 	SDL_EnableUNICODE(SDL_TRUE);
 }
 
-#define POINT_SIZE 144.0
-
-static TTF_Font * TTF_OpenFont_Magic(astring name, int fsize)
-{
-	emu_file file(OPEN_FLAG_READ);
-	if (file.open(name) == FILERR_NONE)
-	{
-		unsigned char buffer[5] = { 0xff, 0xff, 0xff, 0xff, 0xff };
-		unsigned char magic[5] = { 0x00, 0x01, 0x00, 0x00, 0x00 };
-		file.read(buffer,5);
-		if (memcmp(buffer, magic, 5))
-			return NULL;
-	}
-	return TTF_OpenFont(name.cstr(), POINT_SIZE);
-}
-
-static TTF_Font *search_font_config(astring name, bool bold, bool italic, bool underline, bool &bakedstyles)
+//FONT STUBS
+osd_font sdl_osd_interface::font_open(const char *_name, int &height)
 {
 	return 0;
 }
 
-//-------------------------------------------------
-//  font_open - attempt to "open" a handle to the
-//  font with the given name
-//-------------------------------------------------
-osd_font sdl_osd_interface::font_open(const char *_name, int &height)
-{
-	TTF_Font *font = (TTF_Font *)NULL;
-	bool bakedstyles = false;
-	int style = 0;
-
-	// accept qualifiers from the name
-	astring name(_name);
-
-	if (name == "default")
-	{
-		name = "Liberation Sans";
-	}
-
-	bool bold = (name.replace(0, "[B]", "") + name.replace(0, "[b]", "") > 0);
-	bool italic = (name.replace(0, "[I]", "") + name.replace(0, "[i]", "") > 0);
-	bool underline = (name.replace(0, "[U]", "") + name.replace(0, "[u]", "") > 0);
-	bool strike = (name.replace(0, "[S]", "") + name.replace(0, "[s]", "") > 0);
-
-	// first up, try it as a filename
-	font = TTF_OpenFont_Magic(name, POINT_SIZE);
-
-	// if no success, try the font path
-
-	if (!font)
-	{
-		mame_printf_verbose("Searching font %s in -%s\n", name.cstr(), OPTION_FONTPATH);
-		emu_file file(machine().options().font_path(), OPEN_FLAG_READ);
-		if (file.open(name) == FILERR_NONE)
-		{
-			astring full_name = file.fullpath();
-			font = TTF_OpenFont_Magic(full_name, POINT_SIZE);
-			if (font)
-				mame_printf_verbose("Found font %s\n", full_name.cstr());
-		}
-	}
-
-	// if that didn't work, crank up the FontConfig database
-	if (!font)
-	{
-		font = search_font_config(name, bold, italic, underline, bakedstyles);
-	}
-
-	if (!font)
-	{
-		printf("WARNING: Couldn't find/open TrueType font %s, using MAME default\n", name.cstr());
-		return NULL;
-	}
-
-	// apply styles
-	if (!bakedstyles)
-	{
-		style |= bold ? TTF_STYLE_BOLD : 0;
-		style |= italic ? TTF_STYLE_ITALIC : 0;
-	}
-	style |= underline ? TTF_STYLE_UNDERLINE : 0;
-	// SDL_ttf 2.0.9 and earlier does not define TTF_STYLE_STRIKETHROUGH
-#if SDL_VERSIONNUM(TTF_MAJOR_VERSION, TTF_MINOR_VERSION, TTF_PATCHLEVEL) > SDL_VERSIONNUM(2,0,9)
-	style |= strike ? TTF_STYLE_STRIKETHROUGH : 0;
-#else
-	if (strike)
-		mame_printf_warning("Ignoring strikethrough for SDL_TTF with version less 2.0.10\n");
-#endif // PATCHLEVEL
-	TTF_SetFontStyle(font, style);
-
-	height = TTF_FontLineSkip(font);
-
-	return (osd_font)font;
-}
-
-//-------------------------------------------------
-//  font_close - release resources associated with
-//  a given OSD font
-//-------------------------------------------------
-
 void sdl_osd_interface::font_close(osd_font font)
 {
-	TTF_Font *ttffont;
-
-	ttffont = (TTF_Font *)font;
-
-	TTF_CloseFont(ttffont);
 }
-
-//-------------------------------------------------
-//  font_get_bitmap - allocate and populate a
-//  BITMAP_FORMAT_ARGB32 bitmap containing the
-//  pixel values MAKE_ARGB(0xff,0xff,0xff,0xff)
-//  or MAKE_ARGB(0x00,0xff,0xff,0xff) for each
-//  pixel of a black & white font
-//-------------------------------------------------
 
 bitmap_t *sdl_osd_interface::font_get_bitmap(osd_font font, unicode_char chnum, INT32 &width, INT32 &xoffs, INT32 &yoffs)
 {
-	TTF_Font *ttffont;
-	bitmap_t *bitmap = (bitmap_t *)NULL;
-	SDL_Surface *drawsurf;
-	SDL_Color fcol = { 0xff, 0xff, 0xff };
-	UINT16 ustr[16];
-
-	ttffont = (TTF_Font *)font;
-
-	memset(ustr,0,sizeof(ustr));
-	ustr[0] = (UINT16)chnum;
-	drawsurf = TTF_RenderUNICODE_Solid(ttffont, ustr, fcol);
-
-	// was nothing returned?
-	if (drawsurf)
-	{
-		// allocate a MAME destination bitmap
-		bitmap = auto_alloc(machine(), bitmap_t(drawsurf->w, drawsurf->h, BITMAP_FORMAT_ARGB32));
-
-		// copy the rendered character image into it
-		for (int y = 0; y < bitmap->height; y++)
-		{
-			UINT32 *dstrow = BITMAP_ADDR32(bitmap, y, 0);
-			UINT8 *srcrow = (UINT8 *)drawsurf->pixels;
-
-			srcrow += (y * drawsurf->pitch);
-
-			for (int x = 0; x < drawsurf->w; x++)
-			{
-				dstrow[x] = srcrow[x] ? MAKE_ARGB(0xff,0xff,0xff,0xff) : MAKE_ARGB(0x00,0xff,0xff,0xff);
-			}
-		}
-
-		// what are these?
-		xoffs = yoffs = 0;
-		width = drawsurf->w;
-
-		SDL_FreeSurface(drawsurf);
-	}
-
-	return bitmap;
+	return 0;
 }
 
 //DEBUGGER STUBS
@@ -518,7 +303,6 @@ void sdl_osd_interface::wait_for_debugger(device_t &device, bool firststop)
 {
 }
 
-// win32 stubs for linking
 void debugwin_update_during_game(running_machine &machine)
 {
 }
