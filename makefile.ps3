@@ -451,8 +451,7 @@ CCOMFLAGS += -pg
 endif
 
 # add the optimization flag
-#HACK
-CCOMFLAGS += -Os
+CCOMFLAGS += -O2
 
 # if we are optimizing, include optimization options
 # and make all errors into warnings
@@ -588,7 +587,7 @@ VERSIONOBJ = $(OBJ)/version.o
 #-------------------------------------------------
 
 # start with an empty set of libs
-LIBS = `freetype-config --libs`
+LIBS = `freetype-config --libs` `sdl-config --libs`
 
 # add expat XML library
 ifeq ($(BUILD_EXPAT),1)

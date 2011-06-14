@@ -113,26 +113,8 @@ struct _sdl_video_config
 	// vector options
 	float				beamwidth;		// beam width
 
-	// OpenGL options
-	int					filter;			// enable filtering, disabled if glsl_filter>0
-	int					prefer16bpp_tex;
-	int					glsl;
-	int					glsl_filter;		// glsl filtering, >0 disables filter
-	char *              glsl_shader_mamebm[GLSL_SHADER_MAX]; // custom glsl shader set, mame bitmap
-	int					glsl_shader_mamebm_num; // custom glsl shader set number, mame bitmap
-	char *              glsl_shader_scrn[GLSL_SHADER_MAX]; // custom glsl shader set, screen bitmap
-	int					glsl_shader_scrn_num; // custom glsl shader number, screen bitmap
-	int					glsl_vid_attributes;	// glsl brightness, contrast and gamma for RGB bitmaps
-	int					pbo;
-	int					vbo;
-	int					allowtexturerect;	// allow GL_ARB_texture_rectangle, default: no
-	int					forcepow2texture;	// force power of two textures, default: no
-
 	// perftest
 	int					perftest;		// print out real video fps
-
-	// X11 options
-	int					restrictonemonitor;	// in fullscreen, confine to Xinerama monitor 0
 
 	// YUV options
 	int					scale_mode;
