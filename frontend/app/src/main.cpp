@@ -17,9 +17,14 @@ void			Exit		()
 # define	LOG_FILE	"./mame.log"
 #endif
 
-void			LoadGameList		(const std::string& aFile, std::map<std::string, std::string>& aGames)
+void			LoadGameList		(const std::string& aFile, std::list<std::string>& aFiles, SummerfaceList_Ptr aGames)
 {
 	std::ifstream ist(aFile.c_str());
+	if(!ist.good())
+	{
+		ESSUB_Error("Could not read games.txt. Reinstalling the package should fix this.");
+		Exit();
+	}
 
 	while(ist.good() && !ist.eof())
 	{
@@ -28,18 +33,28 @@ void			LoadGameList		(const std::string& aFile, std::map<std::string, std::strin
 
 		if(!line.empty())
 		{
-			std::string driver = line.substr(0, line.find_first_of(" "));
+			std::string setnumber = line.substr(0, 2);
+			std::string driver = line.substr(3, line.find_first_of(" ", 3) - 3);
 			std::string title = line.substr(line.find("\"") + 1);
 			title.erase(title.end() - 1);
 
-			aGames[driver] = title;
+			std::list<std::string>::iterator file = std::find(aFiles.begin(), aFiles.end(), driver);
+			if(file != aFiles.end())
+			{
+				SummerfaceItem_Ptr listitem = boost::make_shared<SummerfaceItem>(title, "");
+				listitem->Properties["DRIVER"] = driver;
+				listitem->IntProperties["SETNUM"] = atoi(setnumber.c_str());
+				aGames->AddItem(listitem);
+
+				aFiles.erase(file);
+			}
 		}
 	}
 
 	//Better show it
-	if(aGames.size() == 0)
+	if(aGames->GetItemCount() == 0)
 	{
-		ESSUB_Error("Could not read games.txt. Reinstalling the package should fix this.");
+		ESSUB_Error("No supported games found.");
 		Exit();
 	}
 }
@@ -57,37 +72,22 @@ int				main		(int argc, char** argv)
 			Summerface::Create("Viewer", tview)->Do();
 		}
 
-		std::map<std::string, std::string> gameList;
-		LoadGameList(GAME_LIST, gameList);
-
-		std::vector<std::string> dirList;
+		//List directory
+		std::list<std::string> dirList;
 		if(!Utility::ListDirectory(ROM_DIR, dirList) || dirList.size() == 0)
 		{
 			ESSUB_Error("Could not list ROM directory [" ROM_DIR "]");
 			Exit();
 		}
+		for(std::list<std::string>::iterator i = dirList.begin(); i != dirList.end(); i ++)
+		{
+			*i = Utility::GetFileName(*i);
+		}
 
 		//Build the list
 		SummerfaceList_Ptr linelist = boost::make_shared<SummerfaceList>(Area(10, 10, 80, 80));
 		linelist->SetView(boost::make_shared<AnchoredListView>(linelist));
-
-		for(std::vector<std::string>::iterator i = dirList.begin(); i != dirList.end(); i ++)
-		{
-			std::string item = Utility::GetFileName(*i);
-
-			if(gameList.find(item) != gameList.end())
-			{
-				SummerfaceItem_Ptr listitem = boost::make_shared<SummerfaceItem>(gameList[item], "");
-				listitem->Properties["DRIVER"] = item;
-				linelist->AddItem(listitem);
-			}
-		}
-
-		if(linelist->GetItemCount() == 0)
-		{
-			ESSUB_Error("No supported games were found.");
-			Exit();
-		}
+		LoadGameList(GAME_LIST, dirList, linelist);
 
 		//Run the list
 		Summerface_Ptr sface = Summerface::Create("games", linelist);
@@ -98,15 +98,19 @@ int				main		(int argc, char** argv)
 		{
 #ifndef __CELLOS_LV2__
 //On non-ps3 just run mame
+			printf("%d\n", linelist->GetSelected()->IntProperties["SETNUM"]);
+
 			char command[1024];
 			snprintf(command, 1024, "mame -rompath \"%s\" %s", ROM_DIR, linelist->GetSelected()->Properties["DRIVER"].c_str());
 			system(command);
 #else
 //On ps3 run mame this way
-			cellFsChmod("/dev_hdd0/game/MAME90000/USRDIR/mame.self", 0777);
+			char bin[512];
+			snprintf(bin, 512, "/dev_hdd0/game/MAME90000/USRDIR/mamebins/mame-%d.self", linelist->GetSelected()->IntProperties["SETNUM"]);
 
+			cellFsChmod(bin, 0777);
 			char* args[] = {"-rompath", ROM_DIR, strdup(linelist->GetSelected()->Properties["DRIVER"].c_str()), 0};
-			sys_game_process_exitspawn2("/dev_hdd0/game/MAME90000/USRDIR/mame.self", (const char**)args, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
+			sys_game_process_exitspawn2(bin, (const char**)args, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
 #endif
 		}
 

@@ -109,7 +109,8 @@ class				Utility
 #endif
 		}
 
-		static bool						ListDirectory				(const std::string& aPath, std::vector<std::string>& aOutput)
+		template <class T>
+		static bool						ListDirectory				(const std::string& aPath, T& aOutput)
 		{
 #ifndef NO_READDIR
 #ifndef S_ISDIR
