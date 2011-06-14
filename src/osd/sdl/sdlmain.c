@@ -37,7 +37,6 @@ SYS_PROCESS_PARAM(1001, 1024 * 1024);
 #include "input.h"
 #include "output.h"
 #include "osdsdl.h"
-#include "sdlos.h"
 
 #include "watchdog.h"
 

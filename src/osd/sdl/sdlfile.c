@@ -34,13 +34,6 @@
 
 
 //============================================================
-//  GLOBAL IDENTIFIERS
-//============================================================
-
-extern const char *sdlfile_socket_identifier;
-extern const char *sdlfile_ptty_identifier;
-
-//============================================================
 //  CONSTANTS
 //============================================================
 
@@ -124,20 +117,6 @@ file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UINT64 
 		goto error;
 	}
 
-	if (strlen(sdlfile_socket_identifier) > 0 && strncmp(path, sdlfile_socket_identifier, strlen(sdlfile_socket_identifier)) == 0)
-	{
-		(*file)->type = SDLFILE_SOCKET;
-		filerr = sdl_open_socket(path, openflags, file, filesize);
-		goto error;
-	}
-
-	if (strlen(sdlfile_ptty_identifier) > 0 && strncmp(path, sdlfile_ptty_identifier, strlen(sdlfile_ptty_identifier)) == 0)
-	{
-		(*file)->type = SDLFILE_PTTY;
-		filerr = sdl_open_ptty(path, openflags, file, filesize);
-		goto error;
-	}
-
 	(*file)->type = SDLFILE_FILE;
 
 	// convert the path into something compatible
@@ -164,41 +143,6 @@ file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UINT64 
 
 	tmpstr = (char *) osd_malloc(strlen((*file)->filename)+1);
 	strcpy(tmpstr, (*file)->filename);
-
-	// does path start with an environment variable?
-	if (tmpstr[0] == '$')
-	{
-		char *envval;
-		envstr = (char *) osd_malloc(strlen(tmpstr)+1);
-
-		strcpy(envstr, tmpstr);
-
-		i = 0;
-		while (envstr[i] != PATHSEPCH && envstr[i] != 0 && envstr[i] != '.')
-		{
-			i++;
-		}
-
-		envstr[i] = '\0';
-
-		envval = osd_getenv(&envstr[1]);
-		if (envval != NULL)
-		{
-			j = strlen(envval) + strlen(tmpstr) + 1;
-			osd_free(tmpstr);
-			tmpstr = (char *) osd_malloc(j);
-
-			// start with the value of $HOME
-			strcpy(tmpstr, envval);
-			// replace the null with a path separator again
-			envstr[i] = PATHSEPCH;
-			// append it
-			strcat(tmpstr, &envstr[i]);
-		}
-		else
-			fprintf(stderr, "Warning: osd_open environment variable %s not found.\n", envstr);
-		osd_free(envstr);
-	}
 
 	#if (defined(SDLMAME_WIN32) || defined(SDLMAME_OS2)) && !defined(__CELLOS_LV2__)
 	access |= O_BINARY;
@@ -302,14 +246,6 @@ file_error osd_read(osd_file *file, void *buffer, UINT64 offset, UINT32 count, U
          return FILERR_NONE;
          break;
 
-      case SDLFILE_SOCKET:
-         return sdl_read_socket(file, buffer, offset, count, actual);
-         break;
-
-      case SDLFILE_PTTY:
-         return sdl_read_ptty(file, buffer, offset, count, actual);
-         break;
-
       default:
          return FILERR_FAILURE;
     }
@@ -347,14 +283,6 @@ file_error osd_write(osd_file *file, const void *buffer, UINT64 offset, UINT32 c
          return FILERR_NONE;
          break;
 
-      case SDLFILE_SOCKET:
-         return sdl_write_socket(file, buffer, offset, count, actual);
-         break;
-
-      case SDLFILE_PTTY:
-         return sdl_write_ptty(file, buffer, offset, count, actual);
-         break;
-
       default:
          return FILERR_FAILURE;
     }
@@ -374,14 +302,6 @@ file_error osd_close(osd_file *file)
          close(file->handle);
          osd_free(file);
          return FILERR_NONE;
-         break;
-
-      case SDLFILE_SOCKET:
-         return sdl_close_socket(file);
-         break;
-
-      case SDLFILE_PTTY:
-         return sdl_close_ptty(file);
          break;
 
       default:

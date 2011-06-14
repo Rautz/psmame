@@ -26,7 +26,6 @@ int sdl_num_processors = 0;
 #include "osinline.h"
 
 #include "sdlsync.h"
-#include "sdlos.h"
 
 #include "eminline.h"
 
@@ -560,24 +559,10 @@ void osd_work_item_release(osd_work_item *item)
 //  effective_num_processors
 //============================================================
 
+//TODO: Is needed?
 static int effective_num_processors(void)
 {
-	char *procsoverride;
-	int numprocs = 0;
-	int physprocs = osd_num_processors();
-
-	if (sdl_num_processors > 0)
-		return MIN(4 * physprocs, sdl_num_processors);
-	else
-	{
-		// if the OSDPROCESSORS environment variable is set, use that value if valid
-		procsoverride = osd_getenv(SDLENV_PROCESSORS);
-		if (procsoverride != NULL && sscanf(procsoverride, "%d", &numprocs) == 1 && numprocs > 0)
-			return MIN(4 * physprocs, numprocs);
-
-		// otherwise, return the info from the system
-		return physprocs;
-	}
+	return 1;
 }
 
 //============================================================
@@ -589,32 +574,6 @@ static UINT32 effective_cpu_mask(int index)
 	char	*s;
 	char	buf[5];
 	UINT32	mask = 0xFFFF;
-
-	s = osd_getenv(SDLENV_CPUMASKS);
-	if (s != NULL && strcmp(s,"none"))
-	{
-		if (!strcmp(s,"auto"))
-		{
-			if (index<2)
-				mask = 0x01; /* main thread and io threads on cpu #0 */
-			else
-				mask = (1 << (((index - 1) % (osd_num_processors() - 1)) + 1));
-		}
-		else
-		{
-			if (strlen(s) % 4 != 0 || strlen(s) < (index+1)*4)
-			{
-				fprintf(stderr,"Invalid cpu mask @index %d: %s\n", index, s);
-			}
-			else
-			{
-				memcpy(buf,s+4*index,4);
-				buf[4] = 0;
-				if (sscanf(buf, "%04x", &mask) != 1)
-					fprintf(stderr,"Invalid cpu mask element %d: %s\n", index, buf);
-			}
-		}
-	}
 	return mask;
 }
 

@@ -13,7 +13,6 @@
 #include <stdlib.h>
 
 #include "osdcore.h"
-#include "sdlos.h"
 
 
 struct _osd_directory

@@ -149,8 +149,6 @@ OSDCOREOBJS = \
 	$(SDLOBJ)/strconv.o	\
 	$(SDLOBJ)/sdldir.o	\
 	$(SDLOBJ)/sdlfile.o 	\
-	$(SDLOBJ)/sdlptty_$(BASE_TARGETOS).o	\
-	$(SDLOBJ)/sdlsocket.o	\
 	$(SDLOBJ)/sdlmisc_$(BASE_TARGETOS).o	\
 	$(SDLOBJ)/sdlos_$(BASE_TARGETOS).o	\
 	$(SDLOBJ)/sdlsync_$(SYNC_IMPLEMENTATION).o     \

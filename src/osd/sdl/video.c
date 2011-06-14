@@ -25,7 +25,6 @@
 #include "input.h"
 
 #include "osdsdl.h"
-#include "sdlos.h"
 
 //============================================================
 //  CONSTANTS
@@ -134,7 +133,6 @@ void sdlvideo_monitor_refresh(sdl_monitor_info *monitor)
 			SDL_VideoDriverName(monitor->monitor_device, sizeof(monitor->monitor_device)-1);
 			if (first_call==0)
 			{
-				char *dimstr = osd_getenv(SDLENV_DESKTOPDIM);
 				const SDL_VideoInfo *sdl_vi;
 
 				sdl_vi = SDL_GetVideoInfo();
@@ -145,10 +143,6 @@ void sdlvideo_monitor_refresh(sdl_monitor_info *monitor)
 				first_call=1;
 				if ((cw==0) || (ch==0))
 				{
-					if (dimstr != NULL)
-					{
-						sscanf(dimstr, "%dx%d", &cw, &ch);
-					}
 					if ((cw==0) || (ch==0))
 					{
 						mame_printf_warning("WARNING: SDL_GetVideoInfo() for driver <%s> is broken.\n", monitor->monitor_device);

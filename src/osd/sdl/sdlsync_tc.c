@@ -395,10 +395,6 @@ void osd_thread_wait_free(osd_thread *thread)
 //============================================================
 //  osd_process_kill
 //============================================================
-
 void osd_process_kill(void)
 {
-#ifndef __CELLOS_LV2__ //No kill
-	kill(getpid(), SIGKILL);
-#endif
 }
