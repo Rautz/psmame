@@ -17,7 +17,6 @@
 #include "render.h"
 #include "sdlsync.h"
 
-#include "osd_opengl.h"
 #include "osdsdl.h"
 
 // I don't like this, but we're going to get spurious "cast to integer of different size" warnings on

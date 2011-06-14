@@ -19,27 +19,11 @@ extern bool QuitThruSDL;
 SYS_PROCESS_PARAM(1001, 1024 * 1024);
 #endif
 
-#ifdef SDLMAME_UNIX
-#ifndef SDLMAME_MACOSX
-#ifndef __CELLOS_LV2__ //No fontconfig
 #include <SDL/SDL_ttf.h>
-#include <fontconfig/fontconfig.h>
-#else
-#include <SDL/SDL_ttf.h>
-#endif
-#endif
-#ifdef SDLMAME_MACOSX
-#include <Carbon/Carbon.h>
-#endif
-#endif
 
 // standard includes
 #ifdef MESS
 #include <unistd.h>
-#endif
-#ifdef SDLMAME_OS2
-#define INCL_DOS
-#include <os2.h>
 #endif
 
 // MAME headers
@@ -55,39 +39,16 @@ SYS_PROCESS_PARAM(1001, 1024 * 1024);
 #include "osdsdl.h"
 #include "sdlos.h"
 
-// we override SDL's normal startup on Win32
-// please see sdlprefix.h as well
-
-#if defined(SDLMAME_X11) && (SDL_MAJOR_VERSION == 1) && (SDL_MINOR_VERSION == 2)
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#endif
-
 #include "watchdog.h"
 
 //============================================================
 //  OPTIONS
 //============================================================
-
-#ifndef INI_PATH
-#ifdef __CELLOS_LV2__
 #ifdef MESS
 	#define INI_PATH "/dev_hdd0/game/MAME90000/USRDIR/;.;ini"
 #else
 	#define INI_PATH "/dev_hdd0/game/MAME90000/USRDIR/;.;ini"
 #endif
-#else
-#if defined(SDLMAME_WIN32) || defined(SDLMAME_MACOSX) || defined(SDLMAME_OS2)
-	#define INI_PATH ".;ini"
-#else
-#ifdef MESS
-	#define INI_PATH "$HOME/.mess;ini"
-#else
-	#define INI_PATH "$HOME/.mame;ini"
-#endif // MESS
-#endif // MACOSX
-#endif // __CELLOS_LV2__
-#endif // INI_PATH
 
 
 //============================================================
@@ -116,11 +77,7 @@ const options_entry sdl_options::s_option_entries[] =
 	// video options
 	{ NULL,                                   NULL,       OPTION_HEADER,     "VIDEO OPTIONS" },
 // OS X can be trusted to have working hardware OpenGL, so default to it on for the best user experience
-#ifdef SDLMAME_MACOSX
-	{ SDLOPTION_VIDEO,                   SDLOPTVAL_OPENGL,  OPTION_STRING,   "video output method: soft or opengl" },
-#else
 	{ SDLOPTION_VIDEO,                   SDLOPTVAL_SOFT,  OPTION_STRING,     "video output method: soft or opengl" },
-#endif
 	{ SDLOPTION_NUMSCREENS,                   "1",        OPTION_INTEGER,    "number of screens to create; SDLMAME only supports 1 at this time" },
 //ROBO
 	{ SDLOPTION_WINDOW ";w",                  "1",        OPTION_BOOLEAN,    "enable window mode; otherwise, full screen mode is assumed" },
@@ -136,44 +93,7 @@ const options_entry sdl_options::s_option_entries[] =
 	{ SDLOPTION_WAITVSYNC,                    "0",        OPTION_BOOLEAN,    "enable waiting for the start of VBLANK before flipping screens; reduces tearing effects" },
 	{ SDLOPTION_SYNCREFRESH,                  "0",        OPTION_BOOLEAN,    "enable using the start of VBLANK for throttling instead of the game time" },
 	#endif
-#if (SDL_VERSION_ATLEAST(1,3,0))
-	{ SDLOPTION_SCALEMODE ";sm",         SDLOPTVAL_NONE,  OPTION_STRING,     "Scale mode: none, hwblit, hwbest, yv12, yuy2, yv12x2, yuy2x2 (-video soft only)" },
-#else
 	{ SDLOPTION_SCALEMODE ";sm",         SDLOPTVAL_NONE,  OPTION_STRING,     "Scale mode: none, async, yv12, yuy2, yv12x2, yuy2x2 (-video soft only)" },
-#endif
-#if USE_OPENGL
-	// OpenGL specific options
-	{ NULL,                                   NULL,   OPTION_HEADER,  "OpenGL-SPECIFIC OPTIONS" },
-	{ SDLOPTION_FILTER ";glfilter;flt",       "1",    OPTION_BOOLEAN, "enable bilinear filtering on screen output" },
-	{ SDLOPTION_PRESCALE,                     "1",    OPTION_INTEGER,                 "scale screen rendering by this amount in software" },
-	{ SDLOPTION_GL_FORCEPOW2TEXTURE,          "0",    OPTION_BOOLEAN, "force power of two textures  (default no)" },
-	{ SDLOPTION_GL_NOTEXTURERECT,             "0",    OPTION_BOOLEAN, "don't use OpenGL GL_ARB_texture_rectangle (default on)" },
-	{ SDLOPTION_GL_VBO,                       "1",    OPTION_BOOLEAN, "enable OpenGL VBO,  if available (default on)" },
-	{ SDLOPTION_GL_PBO,                       "1",    OPTION_BOOLEAN, "enable OpenGL PBO,  if available (default on)" },
-	{ SDLOPTION_GL_GLSL,                      "0",    OPTION_BOOLEAN, "enable OpenGL GLSL, if available (default off)" },
-	{ SDLOPTION_GLSL_FILTER,				  "1",    OPTION_STRING,  "enable OpenGL GLSL filtering instead of FF filtering 0-plain, 1-bilinear (default)" },
-	{ SDLOPTION_SHADER_MAME "0",     SDLOPTVAL_NONE,  OPTION_STRING,  "custom OpenGL GLSL shader set mame bitmap 0" },
-	{ SDLOPTION_SHADER_MAME "1",     SDLOPTVAL_NONE,  OPTION_STRING,  "custom OpenGL GLSL shader set mame bitmap 1" },
-	{ SDLOPTION_SHADER_MAME "2",     SDLOPTVAL_NONE,  OPTION_STRING,  "custom OpenGL GLSL shader set mame bitmap 2" },
-	{ SDLOPTION_SHADER_MAME "3",     SDLOPTVAL_NONE,  OPTION_STRING,  "custom OpenGL GLSL shader set mame bitmap 3" },
-	{ SDLOPTION_SHADER_MAME "4",     SDLOPTVAL_NONE,  OPTION_STRING,  "custom OpenGL GLSL shader set mame bitmap 4" },
-	{ SDLOPTION_SHADER_MAME "5",     SDLOPTVAL_NONE,  OPTION_STRING,  "custom OpenGL GLSL shader set mame bitmap 5" },
-	{ SDLOPTION_SHADER_MAME "6",     SDLOPTVAL_NONE,  OPTION_STRING,  "custom OpenGL GLSL shader set mame bitmap 6" },
-	{ SDLOPTION_SHADER_MAME "7",     SDLOPTVAL_NONE,  OPTION_STRING,  "custom OpenGL GLSL shader set mame bitmap 7" },
-	{ SDLOPTION_SHADER_MAME "8",     SDLOPTVAL_NONE,  OPTION_STRING,  "custom OpenGL GLSL shader set mame bitmap 8" },
-	{ SDLOPTION_SHADER_MAME "9",     SDLOPTVAL_NONE,  OPTION_STRING,  "custom OpenGL GLSL shader set mame bitmap 9" },
-	{ SDLOPTION_SHADER_SCREEN "0",   SDLOPTVAL_NONE,  OPTION_STRING,  "custom OpenGL GLSL shader screen bitmap 0" },
-	{ SDLOPTION_SHADER_SCREEN "1",   SDLOPTVAL_NONE,  OPTION_STRING,  "custom OpenGL GLSL shader screen bitmap 1" },
-	{ SDLOPTION_SHADER_SCREEN "2",   SDLOPTVAL_NONE,  OPTION_STRING,  "custom OpenGL GLSL shader screen bitmap 2" },
-	{ SDLOPTION_SHADER_SCREEN "3",   SDLOPTVAL_NONE,  OPTION_STRING,  "custom OpenGL GLSL shader screen bitmap 3" },
-	{ SDLOPTION_SHADER_SCREEN "4",   SDLOPTVAL_NONE,  OPTION_STRING,  "custom OpenGL GLSL shader screen bitmap 4" },
-	{ SDLOPTION_SHADER_SCREEN "5",   SDLOPTVAL_NONE,  OPTION_STRING,  "custom OpenGL GLSL shader screen bitmap 5" },
-	{ SDLOPTION_SHADER_SCREEN "6",   SDLOPTVAL_NONE,  OPTION_STRING,  "custom OpenGL GLSL shader screen bitmap 6" },
-	{ SDLOPTION_SHADER_SCREEN "7",   SDLOPTVAL_NONE,  OPTION_STRING,  "custom OpenGL GLSL shader screen bitmap 7" },
-	{ SDLOPTION_SHADER_SCREEN "8",   SDLOPTVAL_NONE,  OPTION_STRING,  "custom OpenGL GLSL shader screen bitmap 8" },
-	{ SDLOPTION_SHADER_SCREEN "9",   SDLOPTVAL_NONE,  OPTION_STRING,  "custom OpenGL GLSL shader screen bitmap 9" },
-	{ SDLOPTION_GL_GLSL_VID_ATTR,			 "1",    OPTION_BOOLEAN,  "enable OpenGL GLSL handling of brightness and contrast. Better RGB game performance for free. (default)" },
-#endif
 
 	// per-window options
 	{ NULL,                                   NULL,             OPTION_HEADER,    "PER-WINDOW VIDEO OPTIONS" },
@@ -206,9 +126,6 @@ const options_entry sdl_options::s_option_entries[] =
 	{ NULL,                                   NULL,  OPTION_HEADER,     "FULL SCREEN OPTIONS" },
 //ROBO
 	{ SDLOPTION_SWITCHRES,                    "1",   OPTION_BOOLEAN,    "enable resolution switching" },
-	#ifdef SDLMAME_X11
-	{ SDLOPTION_USEALLHEADS,	             "0",	  OPTION_BOOLEAN,    "split full screen image across monitors" },
-	#endif
 
 	// sound options
 	{ NULL,                                   NULL,  OPTION_HEADER,     "SOUND OPTIONS" },
@@ -219,11 +136,7 @@ const options_entry sdl_options::s_option_entries[] =
 	{ SDLOPTION_KEYMAP,                      "0",    OPTION_BOOLEAN,    "enable keymap" },
 	{ SDLOPTION_KEYMAP_FILE,                 "keymap.dat", OPTION_STRING, "keymap filename" },
 #ifdef MESS
-#ifdef SDLMAME_MACOSX
-	{ SDLOPTION_UIMODEKEY,					 "DELETE", OPTION_STRING,   "Key to toggle MESS keyboard mode" },
-#else
 	{ SDLOPTION_UIMODEKEY,			         "SCRLOCK", OPTION_STRING,  "Key to toggle MESS keyboard mode" },
-#endif	// SDLMAME_MACOSX
 #endif	// MESS
 
 	// joystick mapping
@@ -238,58 +151,9 @@ const options_entry sdl_options::s_option_entries[] =
 	{ SDLOPTION_JOYINDEX "8",                SDLOPTVAL_AUTO, OPTION_STRING,         "name of joystick mapped to joystick #8" },
 	{ SDLOPTION_SIXAXIS,			         "0",	 OPTION_BOOLEAN,    "Use special handling for PS3 Sixaxis controllers" },
 
-#if (SDL_VERSION_ATLEAST(1,3,0))
-	{ NULL, 		                         NULL,   OPTION_HEADER,     "SDL MOUSE MAPPING" },
-	{ SDLOPTION_MOUSEINDEX "1",              SDLOPTVAL_AUTO, OPTION_STRING,         "name of mouse mapped to mouse #1" },
-	{ SDLOPTION_MOUSEINDEX "2",              SDLOPTVAL_AUTO, OPTION_STRING,         "name of mouse mapped to mouse #2" },
-	{ SDLOPTION_MOUSEINDEX "3",              SDLOPTVAL_AUTO, OPTION_STRING,         "name of mouse mapped to mouse #3" },
-	{ SDLOPTION_MOUSEINDEX "4",              SDLOPTVAL_AUTO, OPTION_STRING,         "name of mouse mapped to mouse #4" },
-	{ SDLOPTION_MOUSEINDEX "5",              SDLOPTVAL_AUTO, OPTION_STRING,         "name of mouse mapped to mouse #5" },
-	{ SDLOPTION_MOUSEINDEX "6",              SDLOPTVAL_AUTO, OPTION_STRING,         "name of mouse mapped to mouse #6" },
-	{ SDLOPTION_MOUSEINDEX "7",              SDLOPTVAL_AUTO, OPTION_STRING,         "name of mouse mapped to mouse #7" },
-	{ SDLOPTION_MOUSEINDEX "8",              SDLOPTVAL_AUTO, OPTION_STRING,         "name of mouse mapped to mouse #8" },
-
-	{ NULL, 		                         NULL,   OPTION_HEADER,     "SDL KEYBOARD MAPPING" },
-	{ SDLOPTION_KEYBINDEX "1",               SDLOPTVAL_AUTO, OPTION_STRING,         "name of keyboard mapped to keyboard #1" },
-	{ SDLOPTION_KEYBINDEX "2",               SDLOPTVAL_AUTO, OPTION_STRING,         "name of keyboard mapped to keyboard #2" },
-	{ SDLOPTION_KEYBINDEX "3",               SDLOPTVAL_AUTO, OPTION_STRING,         "name of keyboard mapped to keyboard #3" },
-	{ SDLOPTION_KEYBINDEX "4",               SDLOPTVAL_AUTO, OPTION_STRING,         "name of keyboard mapped to keyboard #4" },
-	{ SDLOPTION_KEYBINDEX "5",               SDLOPTVAL_AUTO, OPTION_STRING,         "name of keyboard mapped to keyboard #5" },
-	{ SDLOPTION_KEYBINDEX "6",               SDLOPTVAL_AUTO, OPTION_STRING,         "name of keyboard mapped to keyboard #6" },
-	{ SDLOPTION_KEYBINDEX "7",               SDLOPTVAL_AUTO, OPTION_STRING,         "name of keyboard mapped to keyboard #7" },
-	{ SDLOPTION_KEYBINDEX "8",               SDLOPTVAL_AUTO, OPTION_STRING,         "name of keyboard mapped to keyboard #8" },
-#endif
-	// SDL low level driver options
-	{ NULL, 		                         NULL,   OPTION_HEADER,     "SDL LOWLEVEL DRIVER OPTIONS" },
-	{ SDLOPTION_VIDEODRIVER ";vd",           SDLOPTVAL_AUTO,  OPTION_STRING,        "sdl video driver to use ('x11', 'directfb', ... or 'auto' for SDL default" },
-#if (SDL_VERSION_ATLEAST(1,3,0))
-	{ SDLOPTION_RENDERDRIVER ";rd",          SDLOPTVAL_AUTO,  OPTION_STRING,        "sdl render driver to use ('software', 'opengl', 'directfb' ... or 'auto' for SDL default" },
-#endif
-	{ SDLOPTION_AUDIODRIVER ";ad",           SDLOPTVAL_AUTO,  OPTION_STRING,        "sdl audio driver to use ('alsa', 'arts', ... or 'auto' for SDL default" },
-#if USE_OPENGL
-	{ SDLOPTION_GL_LIB,                      SDLOPTVAL_GLLIB, OPTION_STRING,        "alternative libGL.so to use; 'auto' for system default" },
-#endif
-
 	// End of list
 	{ NULL }
 };
-
-//============================================================
-//  OS2 specific
-//============================================================
-
-#ifdef SDLMAME_OS2
-void MorphToPM()
-{
-  PPIB pib;
-  PTIB tib;
-
-  DosGetInfoBlocks(&tib, &pib);
-
-  // Change flag from VIO to PM:
-  if (pib->pib_ultype==2) pib->pib_ultype = 3;
-}
-#endif
 
 //============================================================
 //  sdl_options
@@ -304,14 +168,20 @@ sdl_options::sdl_options()
 //============================================================
 //  main
 //============================================================
-
-// we do some special sauce on Win32...
-
 #ifdef __CELLOS_LV2__
 #include <SDL_cellhacks.h>
+static FILE* CELL_LogFile;
+void	CELL_Log(const char* aFormat, va_list aArgs)
+{
+	if(!CELL_LogFile)
+	{
+		CELL_LogFile = fopen("/dev_hdd0/game/MAME90000/USRDIR/mame.log", "w");
+	}
+
+	vfprintf(CELL_LogFile, aFormat, aArgs);
+}
 #endif
 
-#if !defined(SDLMAME_WIN32)
 int main(int argc, char **argv)
 {
 	int res = 0;
@@ -320,63 +190,15 @@ int main(int argc, char **argv)
 	CELL_RC_SetFile("/dev_hdd0/game/MAME90000/USRDIR/sdcellrc");
 #endif
 
-#else
-
-/* gee */
-extern "C" DECLSPEC void SDLCALL SDL_SetModuleHandle(void *hInst);
-
-// translated to utf8_main
-int main(int argc, char *argv[])
-{
-	int res = 0;
-
-#if	!(SDL_VERSION_ATLEAST(1,3,0))
-	/* Load SDL dynamic link library */
-	if ( SDL_Init(SDL_INIT_NOPARACHUTE) < 0 ) {
-		fprintf(stderr, "WinMain() error: %s", SDL_GetError());
-		return(FALSE);
-	}
-	SDL_SetModuleHandle(GetModuleHandle(NULL));
-#endif
-#endif
 	// disable I/O buffering
 	setvbuf(stdout, (char *) NULL, _IONBF, 0);
 	setvbuf(stderr, (char *) NULL, _IONBF, 0);
 
-	#ifdef SDLMAME_UNIX
-	#ifndef SDLMAME_MACOSX
 	if (TTF_Init() == -1)
 	{
 		printf("SDL_ttf failed: %s\n", TTF_GetError());
 	}
-#ifndef __CELLOS_LV2__ //No fontconfig
-	FcInit();
-#endif
-	#endif
-	#endif
 
-	#ifdef SDLMAME_OS2
-	MorphToPM();
-	#endif
-
-#if defined(SDLMAME_X11) && (SDL_MAJOR_VERSION == 1) && (SDL_MINOR_VERSION == 2)
-	if (SDL_Linked_Version()->patch < 10)
-	/* workaround for SDL choosing a 32-bit ARGB visual */
-	{
-		Display *display;
-		if ((display = XOpenDisplay(NULL)) && (DefaultDepth(display, DefaultScreen(display)) >= 24))
-		{
-			XVisualInfo vi;
-			char buf[130];
-			if (XMatchVisualInfo(display, DefaultScreen(display), 24, TrueColor, &vi)) {
-				snprintf(buf, sizeof(buf), "0x%lx", vi.visualid);
-				osd_setenv(SDLENV_VISUALID, buf, 0);
-			}
-		}
-		if (display)
-			XCloseDisplay(display);
-	}
-#endif
 	{
 		sdl_osd_interface osd;
 		sdl_options options;
@@ -393,19 +215,13 @@ int main(int argc, char *argv[])
 	// already called...
 	//SDL_Quit();
 
-	#ifdef SDLMAME_UNIX
-	#ifndef SDLMAME_MACOSX
 	TTF_Quit();
-#ifndef __CELLOS_LV2__ //No fontconfig
-	FcFini();
-#endif
-	#endif
-	#endif
 
-#ifndef __CELLOS_LV2__
-	exit(res);
-	return res;
-#else
+	if(CELL_LogFile)
+	{
+		fclose(CELL_LogFile);
+	}
+
 	if(!QuitThruSDL)
 	{
 		const char* args[2] = {"-showlog", 0};
@@ -416,45 +232,34 @@ int main(int argc, char *argv[])
 		exit(res);
 		return res;
 	}
-#endif
 }
-
-
 
 //============================================================
 //  output_oslog
 //============================================================
-
 static void output_oslog(running_machine &machine, const char *buffer)
 {
 	fputs(buffer, stderr);
 }
 
-
-
 //============================================================
 //  constructor
 //============================================================
-
 sdl_osd_interface::sdl_osd_interface()
 {
 	m_watchdog = NULL;
 }
 
-
 //============================================================
 //  destructor
 //============================================================
-
 sdl_osd_interface::~sdl_osd_interface()
 {
 }
 
-
 //============================================================
 //  osd_exit
 //============================================================
-
 void sdl_osd_interface::osd_exit(running_machine &machine)
 {
 
@@ -463,123 +268,8 @@ void sdl_osd_interface::osd_exit(running_machine &machine)
 }
 
 //============================================================
-//  defines_verbose
-//============================================================
-
-#define MAC_EXPAND_STR(_m) #_m
-#define MACRO_VERBOSE(_mac) \
-	do { \
-		if (strcmp(MAC_EXPAND_STR(_mac), #_mac) != 0) \
-			mame_printf_verbose("%s=%s ", #_mac, MAC_EXPAND_STR(_mac)); \
-	} while (0)
-
-#define _SDL_VER #SDL_MAJOR_VERSION "." #SDL_MINOR_VERSION "." #SDL_PATCHLEVEL
-
-static void defines_verbose(void)
-{
-	mame_printf_verbose("Build version:      %s\n", build_version);
-	mame_printf_verbose("Build architecure:  ");
-	MACRO_VERBOSE(SDLMAME_ARCH);
-	mame_printf_verbose("\n");
-	mame_printf_verbose("Build defines 1:    ");
-	MACRO_VERBOSE(SDLMAME_UNIX);
-	MACRO_VERBOSE(SDLMAME_X11);
-	MACRO_VERBOSE(SDLMAME_WIN32);
-	MACRO_VERBOSE(SDLMAME_OS2);
-	MACRO_VERBOSE(SDLMAME_MACOSX);
-	MACRO_VERBOSE(SDLMAME_DARWIN);
-	MACRO_VERBOSE(SDLMAME_LINUX);
-	MACRO_VERBOSE(SDLMAME_SOLARIS);
-	MACRO_VERBOSE(SDLMAME_NOASM);
-	MACRO_VERBOSE(SDLMAME_IRIX);
-	MACRO_VERBOSE(SDLMAME_BSD);
-	mame_printf_verbose("\n");
-	mame_printf_verbose("Build defines 1:    ");
-	MACRO_VERBOSE(LSB_FIRST);
-	MACRO_VERBOSE(PTR64);
-	MACRO_VERBOSE(MAME_DEBUG);
-	MACRO_VERBOSE(NO_DEBUGBER);
-	MACRO_VERBOSE(BIGENDIAN);
-	MACRO_VERBOSE(CPP_COMPILE);
-	MACRO_VERBOSE(DISTRO);
-	MACRO_VERBOSE(SYNC_IMPLEMENTATION);
-	mame_printf_verbose("\n");
-	mame_printf_verbose("SDL/OpenGL defines: ");
-	mame_printf_verbose("SDL_COMPILEDVERSION=%d ", SDL_COMPILEDVERSION);
-	MACRO_VERBOSE(USE_OPENGL);
-	MACRO_VERBOSE(USE_DISPATCH_GL);
-	mame_printf_verbose("\n");
-	mame_printf_verbose("Compiler defines A: ");
-	MACRO_VERBOSE(__GNUC__);
-	MACRO_VERBOSE(__GNUC_MINOR__);
-	MACRO_VERBOSE(__GNUC_PATCHLEVEL__);
-	MACRO_VERBOSE(__VERSION__);
-	mame_printf_verbose("\n");
-	mame_printf_verbose("Compiler defines B: ");
-	MACRO_VERBOSE(__amd64__);
-	MACRO_VERBOSE(__x86_64__);
-	MACRO_VERBOSE(__unix__);
-	MACRO_VERBOSE(__i386__);
-	MACRO_VERBOSE(__ppc__);
-	MACRO_VERBOSE(__ppc64__);
-	mame_printf_verbose("\n");
-	mame_printf_verbose("Compiler defines C: ");
-	MACRO_VERBOSE(_FORTIFY_SOURCE);
-	MACRO_VERBOSE(__USE_FORTIFY_LEVEL);
-	mame_printf_verbose("\n");
-}
-
-//============================================================
-//  osd_sdl_info
-//============================================================
-
-static void osd_sdl_info(void)
-{
-#if SDL_VERSION_ATLEAST(1,3,0)
-	int i, num = SDL_GetNumVideoDrivers();
-
-	mame_printf_verbose("Available videodrivers: ");
-	for (i=0;i<num;i++)
-	{
-		const char *name = SDL_GetVideoDriver(i);
-		mame_printf_verbose("%s ", name);
-	}
-	mame_printf_verbose("\n");
-	mame_printf_verbose("Current Videodriver: %s\n", SDL_GetCurrentVideoDriver());
-	num = SDL_GetNumVideoDisplays();
-	for (i=0;i<num;i++)
-	{
-		SDL_DisplayMode mode;
-		int j;
-
-		mame_printf_verbose("\tDisplay #%d\n", i);
-		if (SDL_GetDesktopDisplayMode(i, &mode));
-			mame_printf_verbose("\t\tDesktop Mode:         %dx%d-%d@%d\n", mode.w, mode.h, SDL_BITSPERPIXEL(mode.format), mode.refresh_rate);
-		if (SDL_GetCurrentDisplayMode(i, &mode));
-			mame_printf_verbose("\t\tCurrent Display Mode: %dx%d-%d@%d\n", mode.w, mode.h, SDL_BITSPERPIXEL(mode.format), mode.refresh_rate);
-		mame_printf_verbose("\t\tRenderdrivers:\n");
-		for (j=0; j<SDL_GetNumRenderDrivers(); j++)
-		{
-			SDL_RendererInfo info;
-			SDL_GetRenderDriverInfo(j, &info);
-			mame_printf_verbose("\t\t\t%10s (%dx%d)\n", info.name, info.max_texture_width, info.max_texture_height);
-		}
-	}
-
-	mame_printf_verbose("Available audio drivers: \n");
-	num = SDL_GetNumAudioDrivers();
-	for (i=0;i<num;i++)
-	{
-		mame_printf_verbose("\t%-20s\n", SDL_GetAudioDriver(i));
-	}
-#endif
-}
-
-
-//============================================================
 //  init
 //============================================================
-
 void sdl_osd_interface::init(running_machine &machine)
 {
 	// call our parent
@@ -600,44 +290,6 @@ void sdl_osd_interface::init(running_machine &machine)
 		assert(!error_string);
 	}
 
-	// Some driver options - must be before audio init!
-	stemp = options.audio_driver();
-	if (stemp != NULL && strcmp(stemp, SDLOPTVAL_AUTO) != 0)
-	{
-		mame_printf_verbose("Setting SDL audiodriver '%s' ...\n", stemp);
-		osd_setenv(SDLENV_AUDIODRIVER, stemp, 1);
-	}
-
-	stemp = options.video_driver();
-	if (stemp != NULL && strcmp(stemp, SDLOPTVAL_AUTO) != 0)
-	{
-		mame_printf_verbose("Setting SDL videodriver '%s' ...\n", stemp);
-		osd_setenv(SDLENV_VIDEODRIVER, stemp, 1);
-	}
-
-	if (SDL_VERSION_ATLEAST(1,3,0))
-	{
-		stemp = options.render_driver();
-		if (stemp != NULL && strcmp(stemp, SDLOPTVAL_AUTO) != 0)
-		{
-			mame_printf_verbose("Setting SDL renderdriver '%s' ...\n", stemp);
-			osd_setenv(SDLENV_RENDERDRIVER, stemp, 1);
-		}
-	}
-
-	/* Set the SDL environment variable for drivers wanting to load the
-     * lib at startup.
-     */
-	/* FIXME: move lib loading code from drawogl.c here */
-#ifndef __CELLOS_LV2__ //No opengl
-	stemp = options.gl_lib();
-	if (stemp != NULL && strcmp(stemp, SDLOPTVAL_AUTO) != 0)
-	{
-		osd_setenv("SDL_VIDEO_GL_DRIVER", stemp, 1);
-		mame_printf_verbose("Setting SDL_VIDEO_GL_DRIVER = '%s' ...\n", stemp);
-	}
-#endif
-
 	/* get number of processors */
 	stemp = options.numprocessors();
 
@@ -654,31 +306,15 @@ void sdl_osd_interface::init(running_machine &machine)
 	}
 
 	/* Initialize SDL */
-
 	if (!SDLMAME_INIT_IN_WORKER_THREAD)
 	{
-#if (SDL_VERSION_ATLEAST(1,3,0))
-		if (SDL_InitSubSystem(SDL_INIT_TIMER|SDL_INIT_AUDIO| SDL_INIT_VIDEO| SDL_INIT_JOYSTICK|SDL_INIT_NOPARACHUTE)) {
-#else
 		if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_AUDIO| SDL_INIT_VIDEO| SDL_INIT_JOYSTICK|SDL_INIT_NOPARACHUTE)) {
-#endif
 			mame_printf_error("Could not initialize SDL %s\n", SDL_GetError());
 			exit(-1);
 		}
-		osd_sdl_info();
 	}
 	// must be before sdlvideo_init!
 	machine.add_notifier(MACHINE_NOTIFY_EXIT, osd_exit);
-
-	defines_verbose();
-
-	if (!SDLMAME_HAS_DEBUGGER)
-		if (machine.debug_flags & DEBUG_FLAG_OSD_ENABLED)
-		{
-			mame_printf_error("sdlmame: -debug not supported on X11-less builds\n\n");
-			osd_exit(machine);
-			exit(-1);
-		}
 
 	if (sdlvideo_init(machine))
 	{
@@ -710,168 +346,10 @@ void sdl_osd_interface::init(running_machine &machine)
 		m_watchdog->setTimeout(watchdog_timeout);
 	}
 
-#if (SDL_VERSION_ATLEAST(1,3,0))
-	SDL_EventState(SDL_TEXTINPUT, SDL_TRUE);
-#else
 	SDL_EnableUNICODE(SDL_TRUE);
-#endif
 }
 
-#ifdef SDLMAME_UNIX
 #define POINT_SIZE 144.0
-
-#ifdef SDLMAME_MACOSX
-
-#define EXTRA_HEIGHT 1.0
-#define EXTRA_WIDTH 1.15
-
-//-------------------------------------------------
-//  font_open - attempt to "open" a handle to the
-//  font with the given name
-//-------------------------------------------------
-
-osd_font sdl_osd_interface::font_open(const char *_name, int &height)
-{
-	CFStringRef font_name = NULL;
-	CTFontRef ct_font = NULL;
-	CTFontDescriptorRef font_descriptor;
-	CGAffineTransform affine_transform = CGAffineTransformIdentity;
-
-	astring name(_name);
-
-	if (name == "default")
-	{
-		name = "LucidaGrande";
-	}
-
-	font_name = CFStringCreateWithCString( NULL, _name, kCFStringEncodingUTF8 );
-
-	if( font_name != NULL )
-	{
-      font_descriptor = CTFontDescriptorCreateWithNameAndSize( font_name, POINT_SIZE );
-
-      if( font_descriptor != NULL )
-      {
-         ct_font = CTFontCreateWithFontDescriptor( font_descriptor, POINT_SIZE, &affine_transform );
-
-         CFRelease( font_descriptor );
-      }
-   }
-
-   CFRelease( font_name );
-
-   if (!ct_font)
-	{
-		printf("WARNING: Couldn't find/open font %s, using MAME default\n", name.cstr());
-		return NULL;
-	}
-
-   CFStringRef real_name = CTFontCopyPostScriptName( ct_font );
-   char real_name_c_string[255];
-   CFStringGetCString ( real_name, real_name_c_string, 255, kCFStringEncodingUTF8 );
-   mame_printf_verbose("Matching font: %s\n", real_name_c_string);
-   CFRelease( real_name );
-
-   CGFloat line_height = 0.0;
-   line_height += CTFontGetAscent(ct_font);
-   line_height += CTFontGetDescent(ct_font);
-   line_height += CTFontGetLeading(ct_font);
-   height = ceilf(line_height * EXTRA_HEIGHT);
-
-   return (osd_font)ct_font;
-}
-
-//-------------------------------------------------
-//  font_close - release resources associated with
-//  a given OSD font
-//-------------------------------------------------
-
-void sdl_osd_interface::font_close(osd_font font)
-{
-   CTFontRef ct_font = (CTFontRef)font;
-
-   if( ct_font != NULL )
-   {
-      CFRelease( ct_font );
-   }
-}
-
-//-------------------------------------------------
-//  font_get_bitmap - allocate and populate a
-//  BITMAP_FORMAT_ARGB32 bitmap containing the
-//  pixel values MAKE_ARGB(0xff,0xff,0xff,0xff)
-//  or MAKE_ARGB(0x00,0xff,0xff,0xff) for each
-//  pixel of a black & white font
-//-------------------------------------------------
-
-bitmap_t *sdl_osd_interface::font_get_bitmap(osd_font font, unicode_char chnum, INT32 &width, INT32 &xoffs, INT32 &yoffs)
-{
-   UniChar uni_char;
-   CGGlyph glyph;
-   bitmap_t *bitmap = (bitmap_t *)NULL;
-   CTFontRef ct_font = (CTFontRef)font;
-   const CFIndex count = 1;
-   CGRect bounding_rect, success_rect;
-   CGContextRef context_ref;
-
-   if( chnum == ' ' )
-   {
-      uni_char = 'n';
-      CTFontGetGlyphsForCharacters( ct_font, &uni_char, &glyph, count );
-      success_rect = CTFontGetBoundingRectsForGlyphs( ct_font, kCTFontDefaultOrientation, &glyph, &bounding_rect, count );
-      uni_char = chnum;
-      CTFontGetGlyphsForCharacters( ct_font, &uni_char, &glyph, count );
-   }
-   else
-   {
-      uni_char = chnum;
-      CTFontGetGlyphsForCharacters( ct_font, &uni_char, &glyph, count );
-      success_rect = CTFontGetBoundingRectsForGlyphs( ct_font, kCTFontDefaultOrientation, &glyph, &bounding_rect, count );
-   }
-
-   if( CGRectEqualToRect( success_rect, CGRectNull ) == false )
-   {
-      size_t bitmap_width;
-      size_t bitmap_height;
-
-      bitmap_width = ceilf(bounding_rect.size.width * EXTRA_WIDTH);
-      bitmap_width = bitmap_width == 0 ? 1 : bitmap_width;
-
-      bitmap_height = ceilf( (CTFontGetAscent(ct_font) + CTFontGetDescent(ct_font) + CTFontGetLeading(ct_font)) * EXTRA_HEIGHT);
-
-      xoffs = yoffs = 0;
-      width = bitmap_width;
-
-      size_t bits_per_component;
-      CGColorSpaceRef color_space;
-      CGBitmapInfo bitmap_info = kCGBitmapByteOrder32Host | kCGImageAlphaPremultipliedFirst;
-
-      color_space = CGColorSpaceCreateDeviceRGB();
-      bits_per_component = 8;
-
-      bitmap = auto_alloc(machine(), bitmap_t(bitmap_width, bitmap_height, BITMAP_FORMAT_ARGB32));
-
-      context_ref = CGBitmapContextCreate( bitmap->base, bitmap_width, bitmap_height, bits_per_component, bitmap->rowpixels*4, color_space, bitmap_info );
-
-      if( context_ref != NULL )
-      {
-         CGFontRef font_ref;
-         font_ref = CTFontCopyGraphicsFont( ct_font, NULL );
-         CGContextSetTextPosition(context_ref, -bounding_rect.origin.x*EXTRA_WIDTH, CTFontGetDescent(ct_font)+CTFontGetLeading(ct_font) );
-         CGContextSetRGBFillColor(context_ref, 1.0, 1.0, 1.0, 1.0);
-         CGContextSetFont( context_ref, font_ref );
-         CGContextSetFontSize( context_ref, POINT_SIZE );
-         CGContextShowGlyphs( context_ref, &glyph, count );
-         CGFontRelease( font_ref );
-         CGContextRelease( context_ref );
-      }
-
-      CGColorSpaceRelease( color_space );
-   }
-
-   return bitmap;
-}
-#else // UNIX but not OSX
 
 static TTF_Font * TTF_OpenFont_Magic(astring name, int fsize)
 {
@@ -889,121 +367,13 @@ static TTF_Font * TTF_OpenFont_Magic(astring name, int fsize)
 
 static TTF_Font *search_font_config(astring name, bool bold, bool italic, bool underline, bool &bakedstyles)
 {
-#ifndef __CELLOS_LV2__ //No fontconfig
-	TTF_Font *font = (TTF_Font *)NULL;
-	FcConfig *config;
-	FcPattern *pat;
-	FcObjectSet *os;
-	FcFontSet *fontset;
-	FcValue val;
-
-	config = FcConfigGetCurrent();
-	pat = FcPatternCreate();
-	os = FcObjectSetCreate();
-	FcPatternAddString(pat, FC_FAMILY, (const FcChar8 *)name.cstr());
-
-	// try and get a font with the requested styles baked-in
-	if (bold)
-	{
-		if (italic)
-		{
-			FcPatternAddString(pat, FC_STYLE, (const FcChar8 *)"Bold Italic");
-		}
-		else
-		{
-			FcPatternAddString(pat, FC_STYLE, (const FcChar8 *)"Bold");
-		}
-	}
-	else if (italic)
-	{
-		FcPatternAddString(pat, FC_STYLE, (const FcChar8 *)"Italic");
-	}
-	else
-	{
-		FcPatternAddString(pat, FC_STYLE, (const FcChar8 *)"Regular");
-	}
-
-	FcPatternAddString(pat, FC_FONTFORMAT, (const FcChar8 *)"TrueType");
-
-	FcObjectSetAdd(os, FC_FILE);
-	fontset = FcFontList(config, pat, os);
-
-	for (int i = 0; i < fontset->nfont; i++)
-	{
-		if (FcPatternGet(fontset->fonts[i], FC_FILE, 0, &val) != FcResultMatch)
-		{
-			continue;
-		}
-
-		if (val.type != FcTypeString)
-		{
-			continue;
-		}
-
-		mame_printf_verbose("Matching font: %s\n", val.u.s);
-		{
-			astring match_name((const char*)val.u.s);
-			font = TTF_OpenFont_Magic(match_name, POINT_SIZE);
-		}
-
-		if (font)
-		{
-			bakedstyles = true;
-			break;
-		}
-	}
-
-	// didn't get a font above?  try again with no baked-in styles
-	if (!font)
-	{
-		FcPatternDestroy(pat);
-		FcFontSetDestroy(fontset);
-
-		pat = FcPatternCreate();
-		FcPatternAddString(pat, FC_FAMILY, (const FcChar8 *)name.cstr());
-		FcPatternAddString(pat, FC_STYLE, (const FcChar8 *)"Regular");
-		FcPatternAddString(pat, FC_FONTFORMAT, (const FcChar8 *)"TrueType");
-		fontset = FcFontList(config, pat, os);
-
-		for (int i = 0; i < fontset->nfont; i++)
-		{
-			if (FcPatternGet(fontset->fonts[i], FC_FILE, 0, &val) != FcResultMatch)
-			{
-				continue;
-			}
-
-			if (val.type != FcTypeString)
-			{
-				continue;
-			}
-
-			mame_printf_verbose("Matching unstyled font: %s\n", val.u.s);
-			{
-				astring match_name((const char*)val.u.s);
-				font = TTF_OpenFont_Magic(match_name, POINT_SIZE);
-			}
-
-			if (font)
-			{
-				break;
-			}
-		}
-	}
-
-	FcPatternDestroy(pat);
-	FcObjectSetDestroy(os);
-	FcFontSetDestroy(fontset);
-	return font;
-#else
 	return 0;
-#endif
 }
 
 //-------------------------------------------------
 //  font_open - attempt to "open" a handle to the
 //  font with the given name
 //-------------------------------------------------
-
 osd_font sdl_osd_interface::font_open(const char *_name, int &height)
 {
 	TTF_Font *font = (TTF_Font *)NULL;
@@ -1139,37 +509,18 @@ bitmap_t *sdl_osd_interface::font_get_bitmap(osd_font font, unicode_char chnum, 
 
 	return bitmap;
 }
-#endif	// not OSX
-#else	// not UNIX
-//-------------------------------------------------
-//  font_open - attempt to "open" a handle to the
-//  font with the given name
-//-------------------------------------------------
 
-osd_font sdl_osd_interface::font_open(const char *_name, int &height)
-{
-	return (osd_font)NULL;
-}
-
-//-------------------------------------------------
-//  font_close - release resources associated with
-//  a given OSD font
-//-------------------------------------------------
-
-void sdl_osd_interface::font_close(osd_font font)
+//DEBUGGER STUBS
+void sdl_osd_interface::init_debugger()
 {
 }
 
-//-------------------------------------------------
-//  font_get_bitmap - allocate and populate a
-//  BITMAP_FORMAT_ARGB32 bitmap containing the
-//  pixel values MAKE_ARGB(0xff,0xff,0xff,0xff)
-//  or MAKE_ARGB(0x00,0xff,0xff,0xff) for each
-//  pixel of a black & white font
-//-------------------------------------------------
-
-bitmap_t *sdl_osd_interface::font_get_bitmap(osd_font font, unicode_char chnum, INT32 &width, INT32 &xoffs, INT32 &yoffs)
+void sdl_osd_interface::wait_for_debugger(device_t &device, bool firststop)
 {
-	return (bitmap_t *)NULL;
 }
-#endif
+
+// win32 stubs for linking
+void debugwin_update_during_game(running_machine &machine)
+{
+}
+
