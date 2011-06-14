@@ -8,7 +8,7 @@ void			Exit		()
 }
 
 #ifdef __CELLOS_LV2__
-# define	ROM_DIR		"/dev_hdd0/game/MAME90000/USRDIR/ROMS"
+# define	ROM_DIR		"/dev_hdd0/ROMS/mame"
 # define	GAME_LIST	"/dev_hdd0/game/MAME90000/USRDIR/games.txt"
 # define	LOG_FILE	"/dev_hdd0/game/MAME90000/USRDIR/mame.log"
 #else
@@ -39,7 +39,7 @@ void			LoadGameList		(const std::string& aFile, std::map<std::string, std::strin
 	//Better show it
 	if(aGames.size() == 0)
 	{
-		ESSUB_Error("Could not read game list.");
+		ESSUB_Error("Could not read games.txt. Reinstalling the package should fix this.");
 		Exit();
 	}
 }
@@ -63,7 +63,7 @@ int				main		(int argc, char** argv)
 		std::vector<std::string> dirList;
 		if(!Utility::ListDirectory(ROM_DIR, dirList) || dirList.size() == 0)
 		{
-			ESSUB_Error("Could not list ROM directory");
+			ESSUB_Error("Could not list ROM directory [" ROM_DIR "]");
 			Exit();
 		}
 
@@ -81,6 +81,12 @@ int				main		(int argc, char** argv)
 				listitem->Properties["DRIVER"] = item;
 				linelist->AddItem(listitem);
 			}
+		}
+
+		if(linelist->GetItemCount() == 0)
+		{
+			ESSUB_Error("No supported games were found.");
+			Exit();
 		}
 
 		//Run the list
