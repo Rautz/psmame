@@ -13,12 +13,42 @@ void			Exit		()
 # define	GAME_LIST	"/dev_hdd0/game/MAME90000/USRDIR/games.txt"
 # define	LOG_FILE	"/dev_hdd0/game/MAME90000/USRDIR/mame.log"
 # define	GAME_DB		"/dev_hdd0/game/MAME90000/USRDIR/gamedb"
+# define	SNAP_DIR	"/dev_hdd0/ROMS/mame_data/snaps"
 #else
 # define	ROM_DIR		"./ROMS"
 # define	GAME_LIST	"./games.txt"
 # define	LOG_FILE	"./mame.log"
 # define	GAME_DB		"./gamedb"
+# define	SNAP_DIR	"./snaps"
 #endif
+
+class													MAMEListView : public AnchoredListView
+{
+	public:
+														MAMEListView					(SummerfaceList_WeakPtr aList) : AnchoredListView(aList){};
+														~MAMEListView					() {};
+														
+		virtual bool									Input							()
+		{
+			SummerfaceList_Ptr List = WeakList.lock();
+			uint32_t currentItem = List->GetSelection();
+
+			bool result = AnchoredListView::Input();
+
+			if(!result && currentItem != List->GetSelection())
+			{
+				char buff[1024];
+				snprintf(buff, 1024, SNAP_DIR"/%s.png", List->GetSelected()->Properties["DRIVER"].c_str());
+
+				SummerfaceImage_Ptr image = boost::static_pointer_cast<SummerfaceImage>(List->GetInterface()->GetWindow("snapshot"));
+				ImageManager::LoadImage(List->GetSelected()->Properties["DRIVER"], buff);
+				image->SetImage(List->GetSelected()->Properties["DRIVER"]);
+			}
+
+			return result;
+		}
+};
+
 
 void						MakeGameDatabase			(std::list<std::string>& aFiles)
 {
@@ -134,13 +164,17 @@ int				main		(int argc, char** argv)
 		}
 
 		//Build the list
-		SummerfaceList_Ptr linelist = boost::make_shared<SummerfaceList>(Area(10, 10, 80, 80));
-		linelist->SetView(boost::make_shared<AnchoredListView>(linelist));
+		SummerfaceList_Ptr linelist = boost::make_shared<SummerfaceList>(Area(10, 10, 50, 80));
+		linelist->SetView(boost::make_shared<MAMEListView>(linelist));
 		LoadGameDatabase(linelist);
 		linelist->Sort();
 
+		SummerfaceImage_Ptr snap = boost::make_shared<SummerfaceImage>(Area(60, 10, 30, 80), "");
+
 		//Run the list
 		Summerface_Ptr sface = Summerface::Create("games", linelist);
+		sface->AddWindow("snapshot", snap);
+		sface->SetActiveWindow("games");
 		sface->Do();
 
 		//Handle result
@@ -159,7 +193,7 @@ int				main		(int argc, char** argv)
 			snprintf(bin, 512, "/dev_hdd0/game/MAME90000/USRDIR/mamebins/mame-%d.self", linelist->GetSelected()->IntProperties["SETNUM"]);
 
 			cellFsChmod(bin, 0777);
-			char* args[] = {"-rompath", ROM_DIR, strdup(linelist->GetSelected()->Properties["DRIVER"].c_str()), 0};
+			char* args[] = {strdup(linelist->GetSelected()->Properties["DRIVER"].c_str()), 0};
 			sys_game_process_exitspawn2(bin, (const char**)args, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
 #endif
 		}
