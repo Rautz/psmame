@@ -4,10 +4,10 @@
 class				Colors
 {
 	public:
-		static const uint32_t			BackGround				= 0xD0D0D0C0;
-		static const uint32_t			Border					= 0x604040FF;
-		static const uint32_t			Normal 					= 0x202020FF;
-		static const uint32_t			HighLight				= 0xA02020FF;
+		static const uint32_t			BackGround				= 0x101030EF;
+		static const uint32_t			Border					= 0x601010F0;
+		static const uint32_t			Normal 					= 0xFFFFFFFF;
+		static const uint32_t			HighLight				= 0xFFFF00FF;
 		static const uint32_t			SpecialNormal 			= 0x206020FF;
 		static const uint32_t			SpecialHighLight		= 0x20A020FF;
 		static const uint32_t			SpecialBackGround		= 0x40404040;
