@@ -359,7 +359,8 @@ static void extract_video_config(running_machine &machine)
 	video_config.windowed      = options.window();
 	video_config.keepaspect    = options.keep_aspect();
 	video_config.numscreens    = options.numscreens();
-	video_config.fullstretch   = options.uneven_stretch();
+//TODO: Remove
+	video_config.fullstretch   = 0;
 
 	// default to working video please
 	video_config.novideo = 0;

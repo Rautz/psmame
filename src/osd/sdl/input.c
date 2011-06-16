@@ -1316,9 +1316,9 @@ void sdl_osd_interface::customize_input_type_list(input_type_desc *typelist)
 
 			// disable the config menu if the ALT key is down
 			// (allows ALT-TAB to switch between apps)
-			case IPT_UI_CONFIGURE:
-				input_seq_set_5(&typedesc->seq[SEQ_TYPE_STANDARD], KEYCODE_TAB, SEQCODE_NOT, KEYCODE_LALT, SEQCODE_NOT, KEYCODE_RALT);
-				break;
+//			case IPT_UI_CONFIGURE:
+//				input_seq_set_5(&typedesc->seq[SEQ_TYPE_STANDARD], KEYCODE_TAB, SEQCODE_NOT, KEYCODE_LALT, SEQCODE_NOT, KEYCODE_RALT);
+//				break;
 		}
 	}
 }
