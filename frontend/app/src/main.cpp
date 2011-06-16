@@ -25,7 +25,7 @@ void			Exit		()
 class													MAMEListView : public AnchoredListView
 {
 	public:
-														MAMEListView					(SummerfaceList_WeakPtr aList) : AnchoredListView(aList){};
+														MAMEListView					(SummerfaceList_WeakPtr aList) : AnchoredListView(aList), NeedSwitch(1), SwitchTime(0){};
 														~MAMEListView					() {};
 														
 		virtual bool									Input							()
@@ -35,7 +35,16 @@ class													MAMEListView : public AnchoredListView
 
 			bool result = AnchoredListView::Input();
 
-			if(!result && currentItem != List->GetSelection())
+			if(currentItem != List->GetSelection())
+			{
+				SwitchTime = Utility::GetTicks();
+				NeedSwitch = 1;
+
+				SummerfaceImage_Ptr image = boost::static_pointer_cast<SummerfaceImage>(List->GetInterface()->GetWindow("snapshot"));
+				image->SetImage("");
+			}
+
+			if(NeedSwitch && ((Utility::GetTicks() - SwitchTime) > 250))
 			{
 				char buff[1024];
 				snprintf(buff, 1024, SNAP_DIR"/%s.png", List->GetSelected()->Properties["DRIVER"].c_str());
@@ -43,10 +52,15 @@ class													MAMEListView : public AnchoredListView
 				SummerfaceImage_Ptr image = boost::static_pointer_cast<SummerfaceImage>(List->GetInterface()->GetWindow("snapshot"));
 				ImageManager::LoadImage(List->GetSelected()->Properties["DRIVER"], buff);
 				image->SetImage(List->GetSelected()->Properties["DRIVER"]);
+
+				NeedSwitch = 0;
 			}
 
 			return result;
 		}
+
+		uint32_t										NeedSwitch;
+		uint32_t										SwitchTime;
 };
 
 

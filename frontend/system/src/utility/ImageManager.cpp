@@ -94,8 +94,8 @@ Texture*									ImageManager::LoadImage								(const std::string& aName, const
 		return 0;
 	}
 
-//HACK: Don't allow more than 100 images, make a less nuclear pruning routine!
-	if(Images.size() >= 100)
+//HACK: Don't allow more than 33 images, make a less nuclear pruning routine!
+	if(Images.size() >= 33)
 	{
 		Purge();
 	}
