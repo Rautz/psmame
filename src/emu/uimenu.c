@@ -3432,6 +3432,12 @@ static void menu_select_game(running_machine &machine, ui_menu *menu, void *para
 	}
 	menustate = (select_game_state *)state;
 
+#ifdef __CELLOS_LV2__
+	//Just return to loader
+	//TODO: Add confirm
+	machine.schedule_exit();
+	ui_menu_exit(machine);
+#else
 	/* if the menu isn't built, populate now */
 	if (!ui_menu_populated(menu))
 		menu_select_game_populate(machine, menu, menustate);
@@ -3521,6 +3527,7 @@ static void menu_select_game(running_machine &machine, ui_menu *menu, void *para
 						 "The selected game is missing one or more required ROM or CHD images. "
 		                 "Please select a different game.\n\nPress any key to continue.",
 		                 JUSTIFY_CENTER, 0.5f, 0.5f, UI_RED_COLOR);
+#endif
 }
 
 
