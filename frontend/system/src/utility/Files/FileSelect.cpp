@@ -180,7 +180,7 @@ bool									FileSelect::HandleInput				(Summerface_Ptr aInterface, const std::s
 		}
 	}
 
-	if(Directory && ESInput::ButtonDown(0, ES_BUTTON_TAB))
+	if(Directory && ESInput::ButtonDown(0, ES_BUTTON_SHIFT))
 	{
 		SelectedDirectory = true;
 		return true;
