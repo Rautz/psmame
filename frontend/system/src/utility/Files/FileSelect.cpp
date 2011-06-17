@@ -143,10 +143,12 @@ bool							FlowListView::Draw						()
 
 
 
-										FileSelect::FileSelect				(const std::string& aHeader, BookmarkList& aBookMarks, const std::string& aPath, MenuHook* aInputHook) :
+										FileSelect::FileSelect				(const std::string& aHeader, BookmarkList& aBookMarks, const std::string& aPath, bool aDirectory, MenuHook* aInputHook) :
 	List(boost::make_shared<SummerfaceList>(Area(10, 10, 80, 80))),
 	Interface(Summerface::Create("List", List)),
 	Valid(true),
+	Directory(aDirectory),
+	SelectedDirectory(false),
 	Header(aHeader),
 	BookMarks(aBookMarks)
 {
@@ -178,6 +180,12 @@ bool									FileSelect::HandleInput				(Summerface_Ptr aInterface, const std::s
 		}
 	}
 
+	if(Directory && ESInput::ButtonDown(0, ES_BUTTON_TAB))
+	{
+		SelectedDirectory = true;
+		return true;
+	}
+
 	return false;
 }
 
@@ -189,6 +197,7 @@ std::string								FileSelect::GetFile					()
 	
 		while(!WantToDie())
 		{
+			List->SetCanceled(false);
 			Interface->Do();
 
 			if(List->WasCanceled())
@@ -205,7 +214,7 @@ std::string								FileSelect::GetFile					()
 				}
 			}
 			
-			if(List->GetSelected()->IntProperties["DIRECTORY"])
+			if((Directory && !SelectedDirectory) || (!Directory && List->GetSelected()->IntProperties["DIRECTORY"]))
 			{
 				Paths.push(List->GetSelected()->Properties["PATH"]);
 				LoadList(Paths.top());
@@ -261,8 +270,11 @@ void								FileSelect::LoadList						(const std::string& aPath)
 						nicename.push_back('/');
 						directory = true;
 				}
-				
-				List->AddItem(MakeItem(nicename, *i, directory, !directory));
+
+				if((!Directory) || (directory))
+				{
+					List->AddItem(MakeItem(nicename, *i, directory, !directory));
+				}
 			}
 		}
 	}
@@ -273,7 +285,10 @@ void								FileSelect::LoadList						(const std::string& aPath)
 
 		for(int i = 0; i != items.size(); i ++)
 		{
-			List->AddItem(MakeItem(items[i], aPath + items[i], items[i][items[i].length() - 1] == '/', items[i][items[i].length() - 1] != '/'));
+			if(!Directory || items[i][items[i].length() - 1] == '/')
+			{
+				List->AddItem(MakeItem(items[i], aPath + items[i], items[i][items[i].length() - 1] == '/', items[i][items[i].length() - 1] != '/'));
+			}
 		}
 
 		List->Sort(AlphaSortDirectory);

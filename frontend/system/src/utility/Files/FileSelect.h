@@ -6,7 +6,7 @@ typedef std::vector<std::string>					BookmarkList;
 class												FileSelect
 {
 	public:
-													FileSelect						(const std::string& aHeader, BookmarkList& aBookMarks, const std::string& aPath, MenuHook* aInputHook = 0);
+													FileSelect						(const std::string& aHeader, BookmarkList& aBookMarks, const std::string& aPath, bool aDirectory, MenuHook* aInputHook = 0);
 		virtual										~FileSelect						() {};
 													
 		bool										HandleInput						(Summerface_Ptr aInterface, const std::string& aWindow);
@@ -24,6 +24,8 @@ class												FileSelect
 		std::stack<std::string>						Paths;
 
 		bool										Valid;
+		bool										Directory;
+		bool										SelectedDirectory;
 
 		std::string									Header;
 		BookmarkList&								BookMarks;

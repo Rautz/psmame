@@ -1,4 +1,6 @@
 #include <es_system.h>
+#include "defines.h"
+#include "settings.h"
 
 
 void			Exit		()
@@ -7,20 +9,6 @@ void			Exit		()
 
 	exit(0);
 }
-
-#ifdef __CELLOS_LV2__
-# define	ROM_DIR		"/dev_hdd0/ROMS/mame"
-# define	GAME_LIST	"/dev_hdd0/game/MAME90000/USRDIR/games.txt"
-# define	LOG_FILE	"/dev_hdd0/game/MAME90000/USRDIR/mame.log"
-# define	GAME_DB		"/dev_hdd0/game/MAME90000/USRDIR/gamedb"
-# define	SNAP_DIR	"/dev_hdd0/ROMS/mame_data/snaps"
-#else
-# define	ROM_DIR		"./ROMS"
-# define	GAME_LIST	"./games.txt"
-# define	LOG_FILE	"./mame.log"
-# define	GAME_DB		"./gamedb"
-# define	SNAP_DIR	"./snaps"
-#endif
 
 class													MAMEListView : public AnchoredListView
 {
@@ -34,6 +22,11 @@ class													MAMEListView : public AnchoredListView
 			uint32_t currentItem = List->GetSelection();
 
 			bool result = AnchoredListView::Input();
+
+			if(ESInput::ButtonDown(0, ES_BUTTON_AUXRIGHT3))
+			{
+				Settings::Do();
+			}
 
 			if(currentItem != List->GetSelection())
 			{
@@ -101,7 +94,8 @@ void						MakeGameDatabase			(std::list<std::string>& aFiles)
 	//Better show it
 	if(!someFound)
 	{
-		ESSUB_Error("No supported games found.");
+		ESSUB_Error("No supported games found. Please select the path to your ROMs");
+		Settings::ChooseROMDirectory();
 		Exit();
 	}
 }
@@ -138,7 +132,8 @@ void			LoadGameDatabase	(SummerfaceList_Ptr aGames)
 	//Better show it
 	if(aGames->GetItemCount() == 0)
 	{
-		ESSUB_Error("No supported games found.");
+		ESSUB_Error("No supported games found. Please select the path to your ROMs");
+		Settings::ChooseROMDirectory();
 		Exit();
 	}
 }
@@ -157,14 +152,16 @@ int				main		(int argc, char** argv)
 			Summerface::Create("Viewer", tview)->Do();
 		}
 
+		Settings::Read();
+
 		//Build the game database, if needed
 		if(!Utility::FileExists(GAME_DB))
 		{
 			//List directory
 			std::list<std::string> dirList;
-			if(!Utility::ListDirectory(ROM_DIR, dirList) || dirList.size() == 0)
+			if(!Utility::ListDirectory(Settings::ROMPath, dirList) || dirList.size() == 0)
 			{
-				ESSUB_Error("Could not list ROM directory [" ROM_DIR "]");
+				ESSUB_Error("Could not list ROM directory");
 				Exit();
 			}
 
@@ -184,6 +181,7 @@ int				main		(int argc, char** argv)
 		linelist->Sort();
 
 		SummerfaceImage_Ptr snap = boost::make_shared<SummerfaceImage>(Area(60, 10, 30, 80), "");
+		snap->SetHeader("Press [R3] for options");
 
 		//Run the list
 		Summerface_Ptr sface = Summerface::Create("games", linelist);
@@ -199,7 +197,7 @@ int				main		(int argc, char** argv)
 			printf("%d\n", linelist->GetSelected()->IntProperties["SETNUM"]);
 
 			char command[1024];
-			snprintf(command, 1024, "mame -rompath \"%s\" %s", ROM_DIR, linelist->GetSelected()->Properties["DRIVER"].c_str());
+			snprintf(command, 1024, "mame -rompath \"%s\" %s", Settings::ROMPath.c_str(), linelist->GetSelected()->Properties["DRIVER"].c_str());
 			system(command);
 #else
 //On ps3 run mame this way
@@ -207,7 +205,7 @@ int				main		(int argc, char** argv)
 			snprintf(bin, 512, "/dev_hdd0/game/MAME90000/USRDIR/mamebins/mame-%d.self", linelist->GetSelected()->IntProperties["SETNUM"]);
 
 			cellFsChmod(bin, 0777);
-			char* args[] = {strdup(linelist->GetSelected()->Properties["DRIVER"].c_str()), 0};
+			char* args[] = {"-rompath", Settings.ROMPath.c_str(), strdup(linelist->GetSelected()->Properties["DRIVER"].c_str()), 0};
 			sys_game_process_exitspawn2(bin, (const char**)args, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
 #endif
 		}
