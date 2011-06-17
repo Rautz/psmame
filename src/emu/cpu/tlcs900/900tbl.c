@@ -5581,8 +5581,10 @@ static void oC8(tlcs900_state *cpustate)
 
 
 /* memory used as source in word operations */
-//ROBO: FIXME: ?
-static void a_D0(tlcs900_state *cpustate)
+#ifdef __CELLOS_LV2__		//CELL SDK headers define _D0
+#undef _D0
+#endif
+static void _D0(tlcs900_state *cpustate)
 {
 	const tlcs900inst *inst;
 	UINT32 *reg = NULL;

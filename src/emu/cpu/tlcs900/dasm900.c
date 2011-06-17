@@ -8,6 +8,12 @@ Toshiba TLCS-900/H disassembly
 #include "debugger.h"
 #include "tlcs900.h"
 
+#ifdef __CELLOS_LV2__	//CELL SDK headers define _D0 and _MAX
+#undef _D0
+#undef _MAX
+#endif
+
+
 enum e_mnemonics
 {
 	_ADC, _ADD, _AND, _ANDCF, _BIT, _BS1B,
@@ -19,9 +25,7 @@ enum e_mnemonics
 	_INCW, _JP, _JR, _JRL, _LD, _LDA,
 	_LDC, _LDCF, _LDD, _LDDR, _LDDRW, _LDDW,
 	_LDF, _LDI, _LDIR, _LDIRW, _LDIW, _LDW,
-//ROBO
-//	_LDX, _LINK, _MAX, _MDEC1, _MDEC2, _MDEC4,
-	_LDX, _LINK, p_MAX, _MDEC1, _MDEC2, _MDEC4,
+	_LDX, _LINK, _MAX, _MDEC1, _MDEC2, _MDEC4,
 
 	_MINC1, _MINC2, _MINC4, _MIRR, _MUL, _MULA,
 	_MULS, _NEG, _NOP, _NORMAL, _OR, _ORCF,
@@ -33,9 +37,7 @@ enum e_mnemonics
 	_SRL, _SRLW, _STCF, _SUB, _SWI, _TSET,
 	_UNLK, _XOR, _XORCF, _ZCF,
 	_80, _88, _90, _98, _A0, _A8, _B0, _B8,
-//ROBO
-	_C0, oC8, a_D0, oD8, _E0, _E8, _F0
-//	_C0, oC8, _D0, oD8, _E0, _E8, _F0
+	_C0, oC8, _D0, oD8, _E0, _E8, _F0
 };
 
 
@@ -1281,7 +1283,7 @@ static const tlcs900inst mnemonic[256] =
 {
 	/* 00 - 1F */
 	{ _NOP, 0, 0 }, { _NORMAL, 0, 0 }, { _PUSH, _SR, 0 }, { _POP, _SR, 0 },
-	{ p_MAX, 0, 0 }, { _HALT, 0, 0 }, { _EI, _I8, 0 }, { _RETI, 0, 0 },
+	{ _MAX, 0, 0 }, { _HALT, 0, 0 }, { _EI, _I8, 0 }, { _RETI, 0, 0 },
 	{ _LD, _M8, _I8 }, { _PUSH, _I8, 0 }, { _LD, _M8, _I16 }, { _PUSH, _I16, 0 },
 	{ _INCF, 0, 0 }, { _DECF, 0, 0 }, { _RET, 0, 0 }, { _RETD, _I16, 0 },
 	{ _RCF, 0, 0 }, { _SCF, 0, 0 }, { _CCF, 0, 0 }, { _ZCF, 0, 0 },
@@ -1344,7 +1346,7 @@ static const tlcs900inst mnemonic[256] =
 	{ _C0, 0, 0 }, { _C0, 0, 0 }, { _DB, 0, 0 }, { oC8, 0, 0 },
 	{ oC8, 0, 0 }, { oC8, 0, 0 }, { oC8, 0, 0 }, { oC8, 0, 0 },
 	{ oC8, 0, 0 }, { oC8, 0, 0 }, { oC8, 0, 0 }, { oC8, 0, 0 },
-	{ _D0, 0, 0 }, { _D0, 0, 0 }, { a_D0, 0, 0 }, { _D0, 0, 0 },
+	{ _D0, 0, 0 }, { _D0, 0, 0 }, { _D0, 0, 0 }, { _D0, 0, 0 },
 	{ _D0, 0, 0 }, { _D0, 0, 0 }, { _DB, 0, 0 }, { oD8, 0, 0 },
 	{ oD8, 0, 0 }, { oD8, 0, 0 }, { oD8, 0, 0 }, { oD8, 0, 0 },
 	{ oD8, 0, 0 }, { oD8, 0, 0 }, { oD8, 0, 0 }, { oD8, 0, 0 },
