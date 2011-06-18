@@ -585,7 +585,7 @@ static const input_type_desc core_types[] =
 	INPUT_PORT_DIGITAL_TYPE( 0, UI,      UI_ON_SCREEN_DISPLAY,"On Screen Display",      SEQ_DEF_1(KEYCODE_TILDE) )
 	INPUT_PORT_DIGITAL_TYPE( 0, UI,      UI_DEBUG_BREAK,      "Break in Debugger",      SEQ_DEF_1(KEYCODE_TILDE) )
 //ROBO
-	INPUT_PORT_DIGITAL_TYPE( 0, UI,      UI_CONFIGURE,        "Config Menu",            SEQ_DEF_1(INDEXED(JOYCODE_BUTTON9, 0)) )
+	INPUT_PORT_DIGITAL_TYPE( 0, UI,      UI_CONFIGURE,        "Config Menu",            SEQ_DEF_1(INDEXED(JOYCODE_BUTTON10, 0)) )
 	INPUT_PORT_DIGITAL_TYPE( 0, UI,      UI_PAUSE,            "Pause",                  SEQ_DEF_1(KEYCODE_P) )
 	INPUT_PORT_DIGITAL_TYPE( 0, UI,      UI_RESET_MACHINE,    "Reset Game",             SEQ_DEF_2(KEYCODE_F3, KEYCODE_LSHIFT) )
 	INPUT_PORT_DIGITAL_TYPE( 0, UI,      UI_SOFT_RESET,       "Soft Reset",             SEQ_DEF_3(KEYCODE_F3, SEQCODE_NOT, KEYCODE_LSHIFT) )

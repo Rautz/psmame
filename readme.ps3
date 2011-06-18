@@ -1,0 +1,46 @@
+Unofficial MAME 0.142 PS3 GameOS port
+http://code.google.com/p/psmame/
+
+Installing:
+  Install the psmame package onto your jailbroken PS3 using normal means.
+  By default all data paths for mame are located under /dev_hdd0/ROMS/mame_data.
+  ROMS themselves can be placed anywhere and their location chosen with the frontend. The recommended path is /dev_hdd0/ROMS/mame.
+
+Default controls:
+  As of right now the only defined controls are R3 to open the MAME config menu, Select for coin, and Start for starting the game.
+  Further control changes can be made in the MAME config menu as needed.
+  Up to four controllers can be used at one time.
+
+Frontend:
+  The frontend can display screenshots of games, these should be placed in /dev_hdd0/ROMS/mame_data/snaps. You can find a full set at http://www.progettosnaps.net/snaps_en.html
+
+Paths:
+  Under /dev_hdd0/ROMS/mame_data
+    hash:	path to hash files
+    samples:	path to samplesets
+    artwork:	path to artwork files
+    ctrlr:	path to controller definitions
+    ini:	path to ini files
+    font:	path to font files
+    cheat:	path to cheat files
+    crosshair:	path to crosshair files
+    snaps:	path to screenshots for frontend
+
+  Under /dev_hdd0/game/MAME90000/USRDIR/data
+    cfg:	directory to save configurations
+    nvram:	directory to save nvram contents,
+    memcard:	directory to save memory card contents
+    inp:	directory to save input device logs
+    sta:	directory to save states
+    snap:	directory to save screenshots
+    diff:	directory to save hard drive image difference files
+    comments:	directory to save debugger comments
+
+
+Known issues
+  When adding ROMs into your ROM dir, you must tell the frontend to rescan them. This can be done in the R3 menu.
+  The display currently only supports scaling by pixel aspect ratio. Future versions will support various aspect correction modes.
+  Changing video settings in the menu may crash MAME, they don't work anyway so don't bother.
+  Games which require a recompiler will not run.
+  Games which have high memory requirements will not run, the PS3 only has a little of 220MB of RAM available.
+  The default controls will need to be tweaked by the user.
