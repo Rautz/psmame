@@ -60,6 +60,7 @@ uint32_t			ESInput::SingleState[MAXPADS][BUTTONS];
 uint32_t			ESInput::Small;
 uint32_t			ESInput::Large;
 
-uint32_t			ESInput::ButtonIndex[][2] = {{2,8}, {2, 1}, {3, 0x80}, {3, 0x40}, {3, 0x10}, {3, 0x20}, {2, 0x10}, {2, 0x40}, {2, 0x80}, {2, 0x20}, {3, 4}, {3, 1}, {2, 2}, {3, 8}, {3, 2}, {2, 4}};
-std::string			ESInput::ButtonNames[16] = {"Start", "Select", "Square", "Cross", "Triangle", "Circle", "Up", "Down", "Left", "Right", "L1", "L2", "L3", "R1", "R2", "R3"};	
+uint32_t			ESInput::ButtonIndex[][2] = {{2,1}, {2, 2}, {2, 4}, {2, 8}, {2, 0x10}, {2, 0x20}, {2, 0x40}, {2, 0x80}, {3,1}, {3, 2}, {3, 4}, {3, 8}, {3, 0x10}, {3, 0x20}, {3, 0x40}, {3, 0x80}};
+std::string			ESInput::ButtonNames[16] = {"Select", "L3", "R3", "Start", "Up", "Right", "Down", "Left", "L2", "R2", "L1", "R1", "Triangle", "Circle", "Cross", "Square"};	
+
 

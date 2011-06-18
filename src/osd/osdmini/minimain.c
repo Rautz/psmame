@@ -98,11 +98,14 @@ enum
 // a single rendering target
 static render_target *our_target;
 
-// the state of each key
+// joystick data
+static INT32 joypad_button_map[16] = {11, 8, 9, 10, 12, 13, 14, 15, 4, 5, 6, 7, 3, 2, 0, 1};
 static INT32 joypad_state[4][16];
 static INT32 joypad_axis_state[4][4];
 
 static UINT32 render_surf[1920*1080];
+static Texture* esTex;
+static bool QuitThruXMB;
 
 //============================================================
 //  FUNCTION PROTOTYPES
@@ -127,8 +130,6 @@ void	CELL_Log(const char* aFormat, va_list aArgs)
 }
 
 
-Texture* esTex;
-
 int main(int argc, char *argv[])
 {
 	InitES();
@@ -138,9 +139,20 @@ int main(int argc, char *argv[])
 	// would pass them as the third parameter here
 	mini_osd_interface osd;
 	sdl_options options;
-	cli_execute(options, osd, argc, argv);
+	int res = cli_execute(options, osd, argc, argv);
 
 	QuitES();
+
+	if(!QuitThruXMB)
+	{
+		const char* args[2] = {"-showlog", 0};
+		sys_game_process_exitspawn2("/dev_hdd0/game/MAME90000/USRDIR/frontend.self", (res == MAMERR_NONE) ? NULL : args, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
+	}
+	else
+	{
+		exit(res);
+		return res;
+	}
 }
 
 
@@ -204,8 +216,8 @@ void mini_osd_interface::init(running_machine &machine)
 
 		for(int j = 0; j != 16; j ++)
 		{
-			snprintf(buffer, 512, "Button %d", j + 1);
-			input_device_item_add(devinfo, buffer, &joypad_state[i][j], (input_item_id)(ITEM_ID_BUTTON1 + j), joypad_get_state);
+			snprintf(buffer, 512, "Button %d", joypad_button_map[j] + 1);
+			input_device_item_add(devinfo, buffer, &joypad_state[i][j], (input_item_id)(ITEM_ID_BUTTON1 + joypad_button_map[j]), joypad_get_state);
 		}
 
 		for(int j = 0; j != 4; j ++)
@@ -258,6 +270,13 @@ void mini_osd_interface::update(bool skip_redraw)
 
 	// update input
 	update_input();
+
+	// check exit state
+	if(WantToDie())
+	{
+		QuitThruXMB = true;
+		machine().schedule_exit();
+	}
 }
 
 
