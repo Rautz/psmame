@@ -162,6 +162,7 @@ int				main		(int argc, char** argv)
 			if(!Utility::ListDirectory(Settings::ROMPath, dirList) || dirList.size() == 0)
 			{
 				ESSUB_Error("Could not list ROM directory");
+				Settings::ChooseROMDirectory();
 				Exit();
 			}
 
