@@ -40,18 +40,32 @@
 //============================================================
 
 #include "osdepend.h"
-#include <time.h>
+#ifndef __CELLOS_LV2__
+#include <sys/time.h>
+#include <unistd.h>
+#else
+#include <sys/sys_time.h>
+#include <sys/timer.h>
+#endif
 
 
 
 //============================================================
 //  osd_ticks
 //============================================================
-
 osd_ticks_t osd_ticks(void)
 {
-	// use the standard library clock function
-	return clock();
+#ifndef __CELLOS_LV2__
+	struct timeval    tp;
+	static osd_ticks_t start_sec = 0;
+
+	gettimeofday(&tp, NULL);
+	if (start_sec==0)
+		start_sec = tp.tv_sec;
+	return (tp.tv_sec - start_sec) * (osd_ticks_t) 1000000 + tp.tv_usec;
+#else
+	return sys_time_get_system_time();
+#endif
 }
 
 
@@ -61,7 +75,7 @@ osd_ticks_t osd_ticks(void)
 
 osd_ticks_t osd_ticks_per_second(void)
 {
-	return CLOCKS_PER_SEC;
+	return (osd_ticks_t)1000000;
 }
 
 
@@ -71,6 +85,21 @@ osd_ticks_t osd_ticks_per_second(void)
 
 void osd_sleep(osd_ticks_t duration)
 {
-	// if there was a generic, cross-platform way to give up
-	// time, this is where we would do it
+	UINT32 msec;
+
+	// convert to milliseconds, rounding down
+	msec = (UINT32)(duration * 1000 / osd_ticks_per_second());
+
+	// only sleep if at least 2 full milliseconds
+	if (msec >= 2)
+	{
+		// take a couple of msecs off the top for good measure
+		msec -= 2;
+#ifndef __CELLOS_LV2__
+		usleep(msec*1000);
+#else
+		sys_timer_usleep(msec*1000);
+#endif
+	}
 }
+

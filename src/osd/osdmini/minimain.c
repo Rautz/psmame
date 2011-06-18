@@ -39,11 +39,36 @@
 //
 //============================================================
 
+#include <es_system.h>
+
 #include "emu.h"
 #include "osdepend.h"
 #include "render.h"
 #include "clifront.h"
 #include "osdmini.h"
+
+// OPTIONS
+class sdl_options : public cli_options
+{
+public:
+	// construction/destruction
+	sdl_options(){};
+};
+
+
+//
+//  SOFTWARE RENDER
+//
+#define FUNC_PREFIX(x)		draw32_##x
+#define PIXEL_TYPE			UINT32
+#define SRCSHIFT_R			0
+#define SRCSHIFT_G			0
+#define SRCSHIFT_B			0
+#define DSTSHIFT_R			16
+#define DSTSHIFT_G			8
+#define DSTSHIFT_B			0
+
+#include "rendersw.c"
 
 
 //============================================================
@@ -73,30 +98,49 @@ enum
 // a single rendering target
 static render_target *our_target;
 
-// a single input device
-static input_device *keyboard_device;
-
 // the state of each key
-static UINT8 keyboard_state[KEY_TOTAL];
+static INT32 joypad_state[4][16];
+static INT32 joypad_axis_state[4][4];
 
+static UINT32 render_surf[1920*1080];
 
 //============================================================
 //  FUNCTION PROTOTYPES
 //============================================================
 
-static INT32 keyboard_get_state(void *device_internal, void *item_internal);
+static INT32 joypad_get_state(void *device_internal, void *item_internal);
 
 
 //============================================================
 //  main
 //============================================================
 
+static FILE* CELL_LogFile;
+void	CELL_Log(const char* aFormat, va_list aArgs)
+{
+	if(!CELL_LogFile)
+	{
+		CELL_LogFile = fopen("/dev_hdd0/game/MAME90000/USRDIR/mame.log", "w");
+	}
+
+	vfprintf(CELL_LogFile, aFormat, aArgs);
+}
+
+
+Texture* esTex;
+
 int main(int argc, char *argv[])
 {
+	InitES();
+	esTex = ESVideo::CreateTexture(1920, 1080);
+
 	// cli_execute does the heavy lifting; if we have osd-specific options, we
 	// would pass them as the third parameter here
 	mini_osd_interface osd;
-	return cli_execute(argc, argv, osd, NULL);
+	sdl_options options;
+	cli_execute(options, osd, argc, argv);
+
+	QuitES();
 }
 
 
@@ -117,11 +161,28 @@ mini_osd_interface::~mini_osd_interface()
 {
 }
 
+///  update input
+static void update_input()
+{
+	ESInput::Refresh();
+
+	for(int i = 0; i != ESInput::PadCount() && i != 4; i ++)
+	{
+		for(int j = 0; j != 16; j ++)
+		{
+			joypad_state[i][j] = ESInput::ButtonPressed(i, j);
+		}
+
+		for(int j = 0; j != 4; j ++)
+		{
+			joypad_axis_state[i][j] = ESInput::GetAxis(i, j) * 512; //?
+		}
+	}
+}
 
 //============================================================
 //  init
 //============================================================
-
 void mini_osd_interface::init(running_machine &machine)
 {
 	// call our parent
@@ -133,26 +194,28 @@ void mini_osd_interface::init(running_machine &machine)
 	// nothing yet to do to initialize sound, since we don't have any
 	// sound updates are handled by update_audio_stream() below
 
-	// initialize the input system by adding devices
-	// let's pretend like we have a keyboard device
-	keyboard_device = input_device_add(&machine, DEVICE_CLASS_KEYBOARD, "Keyboard", NULL);
-	if (keyboard_device == NULL)
-		fatalerror("Error creating keyboard device");
+	// add game pads
+	for(int i = 0; i != 4; i ++)
+	{
+		char buffer[512];
 
-	// our faux keyboard only has a couple of keys (corresponding to the
-	// common defaults)
-	input_device_item_add(keyboard_device, "Esc", &keyboard_state[KEY_ESCAPE], ITEM_ID_ESC, keyboard_get_state);
-	input_device_item_add(keyboard_device, "P1", &keyboard_state[KEY_P1_START], ITEM_ID_1, keyboard_get_state);
-	input_device_item_add(keyboard_device, "B1", &keyboard_state[KEY_BUTTON_1], ITEM_ID_LCONTROL, keyboard_get_state);
-	input_device_item_add(keyboard_device, "B2", &keyboard_state[KEY_BUTTON_2], ITEM_ID_LALT, keyboard_get_state);
-	input_device_item_add(keyboard_device, "B3", &keyboard_state[KEY_BUTTON_3], ITEM_ID_SPACE, keyboard_get_state);
-	input_device_item_add(keyboard_device, "JoyU", &keyboard_state[KEY_JOYSTICK_U], ITEM_ID_UP, keyboard_get_state);
-	input_device_item_add(keyboard_device, "JoyD", &keyboard_state[KEY_JOYSTICK_D], ITEM_ID_DOWN, keyboard_get_state);
-	input_device_item_add(keyboard_device, "JoyL", &keyboard_state[KEY_JOYSTICK_L], ITEM_ID_LEFT, keyboard_get_state);
-	input_device_item_add(keyboard_device, "JoyR", &keyboard_state[KEY_JOYSTICK_R], ITEM_ID_RIGHT, keyboard_get_state);
+		snprintf(buffer, 512, "PAD %d", i + 1);
+		input_device *devinfo = input_device_add(machine, DEVICE_CLASS_JOYSTICK, buffer, NULL);
 
-	// hook up the debugger log
-//  add_logerror_callback(machine, output_oslog);
+		for(int j = 0; j != 16; j ++)
+		{
+			snprintf(buffer, 512, "Button %d", j + 1);
+			input_device_item_add(devinfo, buffer, &joypad_state[i][j], (input_item_id)(ITEM_ID_BUTTON1 + j), joypad_get_state);
+		}
+
+		for(int j = 0; j != 4; j ++)
+		{
+			input_device_item_add(devinfo, buffer, &joypad_axis_state[i][1], (input_item_id)(ITEM_ID_XAXIS + 0), joypad_get_state);
+			input_device_item_add(devinfo, buffer, &joypad_axis_state[i][0], (input_item_id)(ITEM_ID_XAXIS + 1), joypad_get_state);
+			input_device_item_add(devinfo, buffer, &joypad_axis_state[i][3], (input_item_id)(ITEM_ID_XAXIS + 2), joypad_get_state);
+			input_device_item_add(devinfo, buffer, &joypad_axis_state[i][2], (input_item_id)(ITEM_ID_XAXIS + 3), joypad_get_state);
+		}
+	}
 }
 
 
@@ -172,15 +235,29 @@ void mini_osd_interface::update(bool skip_redraw)
 	// get the list of primitives for the target at the current size
 	render_primitive_list &primlist = our_target->get_primitives();
 
-	// lock them, and then render them
+	// lock them
 	primlist.acquire_lock();
 
-	// do the drawing here
+	// draw them
+
+	draw32_draw_primitives(primlist, render_surf, minwidth, minheight, 1920);
+
+	uint32_t* pix = esTex->Map();
+	for(int i = 0; i != minheight; i ++)
+	{
+		memcpy(&pix[1920 * i], &render_surf[1920 * i], minwidth * 4);
+	}
+	esTex->Unmap();
+
+	// unlock them
 	primlist.release_lock();
 
-	// after 5 seconds, exit
-	if (machine().time() > attotime::from_seconds(5))
-		machine().schedule_exit();
+	// present
+	ESVideo::PresentFrame(esTex, Area(0, 0, minwidth, minheight), 0, 10);
+	ESVideo::Flip();
+
+	// update input
+	update_input();
 }
 
 
@@ -192,6 +269,7 @@ void mini_osd_interface::update_audio_stream(const INT16 *buffer, int samples_th
 {
 	// if we had actual sound output, we would copy the
 	// interleaved stereo samples to our sound stream
+	ESAudio::AddSamples((uint32_t*)buffer, samples_this_frame);
 }
 
 
@@ -223,11 +301,7 @@ void mini_osd_interface::customize_input_type_list(input_type_desc *typelist)
 //  keyboard_get_state
 //============================================================
 
-static INT32 keyboard_get_state(void *device_internal, void *item_internal)
+static INT32 joypad_get_state(void *device_internal, void *item_internal)
 {
-	// this function is called by the input system to get the current key
-	// state; it is specified as a callback when adding items to input
-	// devices
-	UINT8 *keystate = (UINT8 *)item_internal;
-	return *keystate;
+	return *(INT32*)item_internal;
 }

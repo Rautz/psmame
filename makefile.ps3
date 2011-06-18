@@ -417,7 +417,7 @@ endif
 #-------------------------------------------------
 
 # start with empties for everything
-CCOMFLAGS = `freetype-config --cflags` `sdl-config --cflags` -I$(CELL_SDK)/target/ppu/include/SDL -w -DPS3_SET_$(PS3_SET_NUM)
+CCOMFLAGS = -w -DPS3_SET_$(PS3_SET_NUM)
 CONLYFLAGS =
 COBJFLAGS =
 CPPONLYFLAGS =
@@ -587,7 +587,7 @@ VERSIONOBJ = $(OBJ)/version.o
 #-------------------------------------------------
 
 # start with an empty set of libs
-LIBS = `freetype-config --libs` `sdl-config --libs`
+LIBS = 
 
 # add expat XML library
 ifeq ($(BUILD_EXPAT),1)

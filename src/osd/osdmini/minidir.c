@@ -39,50 +39,117 @@
 //
 //============================================================
 
+
+#include <dirent.h>
+#include <stdlib.h>
+#include <string.h>
+#ifndef __CELLOS_LV2__
+#include <sys/stat.h>
+#else
+#include <cell/cell_fs.h>
+#endif
+
 #include "osdcore.h"
+
+
+struct _osd_directory
+{
+	osd_directory_entry ent;
+	DIR* fd;
+	char *path;
+};
+
+static char *build_full_path(const char *path, const char *file)
+{
+	char *ret = (char *) osd_malloc(strlen(path)+strlen(file)+2);
+	char *p = ret;
+
+	strcpy(p, path);
+	p += strlen(path);
+	*p++ = '/';
+	strcpy(p, file);
+	return ret;
+}
+
 
 
 //============================================================
 //  osd_opendir
 //============================================================
-
 osd_directory *osd_opendir(const char *dirname)
 {
-	// since there are no standard C library routines for walking directories,
-	// we always return an error here
-	return NULL;
+	osd_directory *dir = (osd_directory *)osd_malloc(sizeof(osd_directory));;
+	if(dir)
+	{
+		memset(dir, 0, sizeof(osd_directory));
+	}
+
+	dir->fd = opendir(dirname);
+	if(!dir->fd)
+	{
+		osd_free(dir);
+		return 0;
+	}
+
+	dir->path = strdup(dirname);
+	return dir;
 }
 
 
 //============================================================
 //  osd_readdir
 //============================================================
-
 const osd_directory_entry *osd_readdir(osd_directory *dir)
 {
-	// since there are no standard C library routines for walking directories,
-	// we always return an error here
-	return NULL;
+	char *temp;
+
+	struct dirent* data = readdir(dir->fd);
+
+	if(!data)
+	{
+		return 0;
+	}
+
+	dir->ent.name = data->d_name;
+	dir->ent.type = (data->d_type == DT_DIR) ? ENTTYPE_DIR : ENTTYPE_FILE;
+
+	//Get file size
+	temp = build_full_path(dir->path, data->d_name);
+#ifndef __CELLOS_LV2__
+	struct stat st;
+	dir->ent.size = stat(temp, &st) ? 0 : st.st_size;
+#else
+	CellFsStat st;
+	dir->ent.size = cellFsStat(temp, &st) ? 0 : st.st_size;
+#endif
+
+	osd_free(temp);
+
+	//Done
+	return &dir->ent;
 }
 
 
 //============================================================
 //  osd_closedir
 //============================================================
-
 void osd_closedir(osd_directory *dir)
 {
-	// since there are no standard C library routines for walking directories,
-	// we do nothing
+	if(dir->fd)
+	{
+		closedir(dir->fd);
+	}
+
+	osd_free(dir->path);
+	osd_free(dir);
 }
 
 
 //============================================================
 //  osd_is_absolute_path
 //============================================================
-
 int osd_is_absolute_path(const char *path)
 {
-	// assume no for everything
-	return FALSE;
+	return (path && path[0] == '/');
 }
+
