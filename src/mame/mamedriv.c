@@ -4221,6 +4221,9 @@ const game_driver * const drivers[] =
 #endif
 
 #ifdef PS3_SET_6
+//SET: tps ?
+		DRIVER(tps) //t:tps f:zn.c r: c:
+
 //SET: flamegun
 		DRIVER(flamegun) //t:flamegun f:zn.c r:tps c:
 		DRIVER(flamegunj) //t:flamegunj f:zn.c r:flamegun c:flamegun
@@ -8274,6 +8277,7 @@ const game_driver * const drivers[] =
 //SET: freezeat
 		DRIVER(freezeat) //t:freezeat f:cojag.c r: c:
 		DRIVER(freezeatjp) //t:freezeatjp f:cojag.c r:freezeat c:freezeat
+
 		DRIVER(freezeat2) //t:freezeat2 f:cojag.c r:freezeat c:freezeat
 		DRIVER(freezeat3) //t:freezeat3 f:cojag.c r:freezeat c:freezeat
 		DRIVER(freezeat4) //t:freezeat4 f:cojag.c r:freezeat c:freezeat

@@ -156,6 +156,17 @@ sdl_options::sdl_options()
 //============================================================
 #include <SDL_cellhacks.h>
 
+static FILE* CELL_LogFile;
+void	CELL_Log(const char* aFormat, va_list aArgs)
+{
+	if(!CELL_LogFile)
+	{
+		CELL_LogFile = fopen("/dev_hdd0/game/MAME90000/USRDIR/mame.log", "w");
+	}
+
+	vfprintf(CELL_LogFile, aFormat, aArgs);
+}
+
 int main(int argc, char **argv)
 {
 	CELL_RC_SetFile("/dev_hdd0/game/MAME90000/USRDIR/sdcellrc");
