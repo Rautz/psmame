@@ -6,6 +6,45 @@ void Exit();
 #include "settings.h"
 #include "defines.h"
 
+class													BooleanItem : public SummerfaceItem
+{
+	public:
+														BooleanItem						(const std::string& aText, int aValue) : SummerfaceItem(aText, "")
+		{
+			IntProperties["VALUE"] = aValue;
+		}
+
+		virtual											~BooleanItem					(){};
+
+		virtual std::string								GetText							() {return SummerfaceItem::GetText() + " " + (IntProperties["VALUE"] ? "YES" : "NO");};
+
+};
+
+class													SettingView : public AnchoredListView
+{
+	public:
+														SettingView						(SummerfaceList_WeakPtr aList) : AnchoredListView(aList) {}
+		virtual											~SettingView					() {};
+														
+		virtual bool									Input							()
+		{
+			SummerfaceList_Ptr list = WeakList.lock();
+
+			if(ESInput::ButtonDown(0, ES_BUTTON_LEFT) || ESInput::ButtonDown(0, ES_BUTTON_RIGHT))
+			{
+				list->GetSelected()->IntProperties["VALUE"] = !list->GetSelected()->IntProperties["VALUE"];
+				return false;
+			}
+
+			if(ESInput::ButtonPressed(0, ES_BUTTON_LEFT) || ESInput::ButtonPressed(0, ES_BUTTON_RIGHT))
+			{
+				//Prevent paging.
+				return false;
+			}
+
+			return AnchoredListView::Input();
+		}
+};
 
 void					Settings::ChooseROMDirectory		()
 {
@@ -33,13 +72,21 @@ void					Settings::DeleteGameDatabase		()
 void					Settings::Do						()
 {
 	SummerfaceList_Ptr list = boost::make_shared<SummerfaceList>(Area(10, 10, 80, 80));
-	list->SetView(boost::make_shared<AnchoredListView>(list));
+	list->SetView(boost::make_shared<SettingView>(list));
 
 	list->AddItem(boost::make_shared<SummerfaceItem>("Change ROM Directory", ""));
 	list->AddItem(boost::make_shared<SummerfaceItem>("Rescan ROM Directory", ""));
+	SummerfaceItem_Ptr SkipItem = boost::make_shared<BooleanItem>("Skip Game Info", SkipGameInfo);
+	list->AddItem(SkipItem);
+
+	SummerfaceItem_Ptr CheatsItem = boost::make_shared<BooleanItem>("Enable Cheats", Cheats);
+	list->AddItem(CheatsItem);
 
 	Summerface::Create("settings", list)->Do();
 	bool wantRestart = false;
+
+	SkipGameInfo = SkipItem->IntProperties["VALUE"];
+	Cheats = CheatsItem->IntProperties["VALUE"];
 
 	if(!list->WasCanceled())
 	{
@@ -54,6 +101,8 @@ void					Settings::Do						()
 			RestartApp();
 		}
 	}
+
+	Dump();
 }
 
 void					Settings::Read						()
@@ -62,7 +111,8 @@ void					Settings::Read						()
 	ini.LoadFile(CONFIG_FILE);
 
 	ROMPath = std::string(ini.GetValue("psmame", "rompath", ROM_DIR));
-	printf("%s\n", ROMPath.c_str());
+	Cheats = ini.GetBoolValue("psmame", "cheats", false);
+	SkipGameInfo = ini.GetBoolValue("psmame", "skipinfo", false);
 }
 
 void					Settings::Dump						()
@@ -70,11 +120,15 @@ void					Settings::Dump						()
 	CSimpleIniA ini;
 	ini.LoadFile(CONFIG_FILE);
 	ini.SetValue("psmame", "rompath", ROMPath.c_str());
+	ini.SetBoolValue("psmame", "cheats", Cheats);
+	ini.SetBoolValue("psmame", "skipinfo", SkipGameInfo);
 	ini.SaveFile(CONFIG_FILE);	
 }
 
 void					Settings::RestartApp				()
 {
+	Dump();
+
 #ifdef __CELLOS_LV2__
 	sys_game_process_exitspawn2("/dev_hdd0/game/MAME90000/USRDIR/frontend.self", 0, 0, 0, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
 #else
@@ -84,3 +138,5 @@ void					Settings::RestartApp				()
 }
 
 std::string				Settings::ROMPath;
+bool					Settings::Cheats;
+bool					Settings::SkipGameInfo;

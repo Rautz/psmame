@@ -206,7 +206,13 @@ int				main		(int argc, char** argv)
 			snprintf(bin, 512, "/dev_hdd0/game/MAME90000/USRDIR/mamebins/mame-%d.self", linelist->GetSelected()->IntProperties["SETNUM"]);
 
 			cellFsChmod(bin, 0777);
-			const char* args[] = {"-rompath", Settings::ROMPath.c_str(), strdup(linelist->GetSelected()->Properties["DRIVER"].c_str()), 0};
+
+			uint32_t onArg = 2;
+			const char* args[32] = {"-rompath", Settings::ROMPath.c_str()};
+			if(Settings::Cheats) 		args[onArg++] = "-cheat";
+			if(Settings::SkipGameInfo)	args[onArg++] = "-skip_gameinfo";
+			args[onArg++] = strdup(linelist->GetSelected()->Properties["DRIVER"].c_str());
+
 			sys_game_process_exitspawn2(bin, (const char**)args, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
 #endif
 		}

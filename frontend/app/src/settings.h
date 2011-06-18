@@ -12,4 +12,7 @@ class							Settings
 
 	public:
 		static std::string		ROMPath;
+		static bool				Cheats;
+		static bool				SkipGameInfo;
 };
+

@@ -47,6 +47,8 @@
 #include "clifront.h"
 #include "osdmini.h"
 
+#undef delete
+
 // OPTIONS
 class sdl_options : public cli_options
 {
@@ -70,27 +72,6 @@ public:
 
 #include "rendersw.c"
 
-
-//============================================================
-//  CONSTANTS
-//============================================================
-
-// we fake a keyboard with the following keys
-enum
-{
-	KEY_ESCAPE,
-	KEY_P1_START,
-	KEY_BUTTON_1,
-	KEY_BUTTON_2,
-	KEY_BUTTON_3,
-	KEY_JOYSTICK_U,
-	KEY_JOYSTICK_D,
-	KEY_JOYSTICK_L,
-	KEY_JOYSTICK_R,
-	KEY_TOTAL
-};
-
-
 //============================================================
 //  GLOBALS
 //============================================================
@@ -103,8 +84,12 @@ static INT32 joypad_button_map[16] = {11, 8, 9, 10, 12, 13, 14, 15, 4, 5, 6, 7, 
 static INT32 joypad_state[4][16];
 static INT32 joypad_axis_state[4][4];
 
-static UINT32 render_surf[1920*1080];
+// render data
+static UINT32* render_surf;
+static UINT32 render_width;
+static UINT32 render_height;
 static Texture* esTex;
+
 static bool QuitThruXMB;
 
 //============================================================
@@ -113,11 +98,9 @@ static bool QuitThruXMB;
 
 static INT32 joypad_get_state(void *device_internal, void *item_internal);
 
-
 //============================================================
-//  main
+//  logging
 //============================================================
-
 static FILE* CELL_LogFile;
 void	CELL_Log(const char* aFormat, va_list aArgs)
 {
@@ -129,11 +112,12 @@ void	CELL_Log(const char* aFormat, va_list aArgs)
 	vfprintf(CELL_LogFile, aFormat, aArgs);
 }
 
-
+//============================================================
+//  main
+//============================================================
 int main(int argc, char *argv[])
 {
 	InitES();
-	esTex = ESVideo::CreateTexture(1920, 1080);
 
 	// cli_execute does the heavy lifting; if we have osd-specific options, we
 	// would pass them as the third parameter here
@@ -155,26 +139,10 @@ int main(int argc, char *argv[])
 	}
 }
 
-
 //============================================================
-//  constructor
+//  update input
 //============================================================
-
-mini_osd_interface::mini_osd_interface()
-{
-}
-
-
-//============================================================
-//  destructor
-//============================================================
-
-mini_osd_interface::~mini_osd_interface()
-{
-}
-
-///  update input
-static void update_input()
+static inline void update_input()
 {
 	ESInput::Refresh();
 
@@ -193,6 +161,31 @@ static void update_input()
 }
 
 //============================================================
+//  update render
+//============================================================
+static inline void update_render(UINT32 width, UINT32 height)
+{
+	if(render_width != width || render_height != height)
+	{
+		if(render_surf)
+		{
+			osd_free(render_surf);
+		}
+
+		if(esTex)
+		{
+			delete esTex;
+		}
+
+		render_width = width;
+		render_height = height;
+		render_surf = (UINT32*)osd_malloc(width * height * 4);
+		esTex = ESVideo::CreateTexture(width, height);
+	}
+}
+
+
+//============================================================
 //  init
 //============================================================
 void mini_osd_interface::init(running_machine &machine)
@@ -202,9 +195,6 @@ void mini_osd_interface::init(running_machine &machine)
 
 	// initialize the video system by allocating a rendering target
 	our_target = machine.render().target_alloc();
-
-	// nothing yet to do to initialize sound, since we don't have any
-	// sound updates are handled by update_audio_stream() below
 
 	// add game pads
 	for(int i = 0; i != 4; i ++)
@@ -244,6 +234,9 @@ void mini_osd_interface::update(bool skip_redraw)
 	// make that the size of our target
 	our_target->set_bounds(minwidth, minheight);
 
+	// update the render state
+	update_render(minwidth, minheight);
+
 	// get the list of primitives for the target at the current size
 	render_primitive_list &primlist = our_target->get_primitives();
 
@@ -251,17 +244,14 @@ void mini_osd_interface::update(bool skip_redraw)
 	primlist.acquire_lock();
 
 	// draw them
+	draw32_draw_primitives(primlist, render_surf, minwidth, minheight, minwidth);
 
-	draw32_draw_primitives(primlist, render_surf, minwidth, minheight, 1920);
-
+	// upload to gpu texture
 	uint32_t* pix = esTex->Map();
-	for(int i = 0; i != minheight; i ++)
-	{
-		memcpy(&pix[1920 * i], &render_surf[1920 * i], minwidth * 4);
-	}
+	memcpy(pix, render_surf, minwidth * minheight * 4);
 	esTex->Unmap();
 
-	// unlock them
+	// unlock the primitives
 	primlist.release_lock();
 
 	// present
@@ -286,8 +276,6 @@ void mini_osd_interface::update(bool skip_redraw)
 
 void mini_osd_interface::update_audio_stream(const INT16 *buffer, int samples_this_frame)
 {
-	// if we had actual sound output, we would copy the
-	// interleaved stereo samples to our sound stream
 	ESAudio::AddSamples((uint32_t*)buffer, samples_this_frame);
 }
 
@@ -298,21 +286,7 @@ void mini_osd_interface::update_audio_stream(const INT16 *buffer, int samples_th
 
 void mini_osd_interface::set_mastervolume(int attenuation)
 {
-	// if we had actual sound output, we would adjust the global
-	// volume in response to this function
-}
-
-
-//============================================================
-//  customize_input_type_list
-//============================================================
-
-void mini_osd_interface::customize_input_type_list(input_type_desc *typelist)
-{
-	// This function is called on startup, before reading the
-	// configuration from disk. Scan the list, and change the
-	// default control mappings you want. It is quite possible
-	// you won't need to change a thing.
+	//TODO:
 }
 
 
