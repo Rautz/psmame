@@ -49,7 +49,7 @@ struct					MESSSystem : public SummerfaceItem
 						MESSSystem						(TiXmlNode* aNode) : SummerfaceItem("", "")
 	{
 		Name = TryXmlGetStringAttribute(aNode->ToElement(), "name");
-		SetText(Name);
+		SetText(aNode->FirstChild("description")->ToElement()->GetText());
 
 		//Grab the devices
 		if(aNode->FirstChild("device"))
@@ -169,6 +169,7 @@ int				main		(int argc, char** argv)
 			{
 #ifndef __CELLOS_LV2__
 				char buffer[1024];
+				//HACKY HACKY
 				snprintf(buffer, 1024, "xmess %s -cart \"%s\"", systemSelect->Name.c_str(), filename.c_str());
 				system(buffer);
 #else
@@ -182,6 +183,8 @@ int				main		(int argc, char** argv)
 				if(Settings::SkipGameInfo)	args[onArg++] = "-skip_gameinfo";
 				if(Settings::AutoSave)		args[onArg++] = "-autosave";
 				if(Settings::AutoFrameSkip)	args[onArg++] = "-autoframeskip";
+				args[onArg++] = "-cart";
+				args[onArg++] = filename.c_str();
 
 				sys_game_process_exitspawn2("/dev_hdd0/game/MESS90000/USRDIR/mess.self", (const char**)args, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
 #endif

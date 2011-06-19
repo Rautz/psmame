@@ -58,28 +58,38 @@ const options_entry emu_options::s_option_entries[] =
 	{ OPTION_READCONFIG ";rc",                           "1",         OPTION_BOOLEAN,    "enable loading of configuration files" },
 	{ OPTION_WRITECONFIG ";wc",                          "0",         OPTION_BOOLEAN,    "writes configuration to (driver).ini on exit" },
 
+#ifdef MESS
+# define DATA_BASE "/dev_hdd0/ROMS/mess_data"
+# define OUT_BASE "/dev_hdd0/game/MAME90000/USRDIR/data"
+# define ROM_PATH "/dev_hdd0/ROMS/mess"
+#else
+# define DATA_BASE "/dev_hdd0/ROMS/mame_data"
+# define OUT_BASE "/dev_hdd0/game/MAME90000/USRDIR/data"
+# define ROM_PATH "/dev_hdd0/ROMS/mame"
+#endif
+
 	// seach path options
 	{ NULL,                                              NULL,        OPTION_HEADER,     "CORE SEARCH PATH OPTIONS" },
-	{ OPTION_MEDIAPATH ";rp;biospath;bp",                "/dev_hdd0/ROMS/mame",      OPTION_STRING,     "path to ROMsets and hard disk images" },
-	{ OPTION_HASHPATH ";hash_directory;hash",            "/dev_hdd0/ROMS/mame_data/hash",      OPTION_STRING,     "path to hash files" },
-	{ OPTION_SAMPLEPATH ";sp",                           "/dev_hdd0/ROMS/mame_data/samples",   OPTION_STRING,     "path to samplesets" },
-	{ OPTION_ARTPATH,                                    "/dev_hdd0/ROMS/mame_data/artwork",   OPTION_STRING,     "path to artwork files" },
-	{ OPTION_CTRLRPATH,                                  "/dev_hdd0/ROMS/mame_data/ctrlr",     OPTION_STRING,     "path to controller definitions" },
-	{ OPTION_INIPATH,                                    "/dev_hdd0/ROMS/mame_data/ini",     OPTION_STRING,     "path to ini files" },
-	{ OPTION_FONTPATH,                                   "/dev_hdd0/ROMS/mame_data/font",         OPTION_STRING,     "path to font files" },
-	{ OPTION_CHEATPATH,                                  "/dev_hdd0/ROMS/mame_data/cheat",     OPTION_STRING,     "path to cheat files" },
-	{ OPTION_CROSSHAIRPATH,                              "/dev_hdd0/ROMS/mame_data/crosshair", OPTION_STRING,     "path to crosshair files" },
+	{ OPTION_MEDIAPATH ";rp;biospath;bp",                ROM_PATH,      OPTION_STRING,     "path to ROMsets and hard disk images" },
+	{ OPTION_HASHPATH ";hash_directory;hash",            DATA_BASE"/hash",      OPTION_STRING,     "path to hash files" },
+	{ OPTION_SAMPLEPATH ";sp",                           DATA_BASE"/samples",   OPTION_STRING,     "path to samplesets" },
+	{ OPTION_ARTPATH,                                    DATA_BASE"/artwork",   OPTION_STRING,     "path to artwork files" },
+	{ OPTION_CTRLRPATH,                                  DATA_BASE"/ctrlr",     OPTION_STRING,     "path to controller definitions" },
+	{ OPTION_INIPATH,                                    DATA_BASE"/ini",     OPTION_STRING,     "path to ini files" },
+	{ OPTION_FONTPATH,                                   DATA_BASE"/font",         OPTION_STRING,     "path to font files" },
+	{ OPTION_CHEATPATH,                                  DATA_BASE"/cheat",     OPTION_STRING,     "path to cheat files" },
+	{ OPTION_CROSSHAIRPATH,                              DATA_BASE"/crosshair", OPTION_STRING,     "path to crosshair files" },
 
 	// output directory options
 	{ NULL,                                              NULL,        OPTION_HEADER,     "CORE OUTPUT DIRECTORY OPTIONS" },
-	{ OPTION_CFG_DIRECTORY,                              "/dev_hdd0/game/MAME90000/USRDIR/data/cfg",       OPTION_STRING,     "directory to save configurations" },
-	{ OPTION_NVRAM_DIRECTORY,                            "/dev_hdd0/game/MAME90000/USRDIR/data/nvram",     OPTION_STRING,     "directory to save nvram contents" },
-	{ OPTION_MEMCARD_DIRECTORY,                          "/dev_hdd0/game/MAME90000/USRDIR/data/memcard",   OPTION_STRING,     "directory to save memory card contents" },
-	{ OPTION_INPUT_DIRECTORY,                            "/dev_hdd0/game/MAME90000/USRDIR/data/inp",       OPTION_STRING,     "directory to save input device logs" },
-	{ OPTION_STATE_DIRECTORY,                            "/dev_hdd0/game/MAME90000/USRDIR/data/sta",       OPTION_STRING,     "directory to save states" },
-	{ OPTION_SNAPSHOT_DIRECTORY,                         "/dev_hdd0/game/MAME90000/USRDIR/data/snap",      OPTION_STRING,     "directory to save screenshots" },
-	{ OPTION_DIFF_DIRECTORY,                             "/dev_hdd0/game/MAME90000/USRDIR/data/diff",      OPTION_STRING,     "directory to save hard drive image difference files" },
-	{ OPTION_COMMENT_DIRECTORY,                          "/dev_hdd0/game/MAME90000/USRDIR/data/comments",  OPTION_STRING,     "directory to save debugger comments" },
+	{ OPTION_CFG_DIRECTORY,                              OUT_BASE"/cfg",       OPTION_STRING,     "directory to save configurations" },
+	{ OPTION_NVRAM_DIRECTORY,                            OUT_BASE"/nvram",     OPTION_STRING,     "directory to save nvram contents" },
+	{ OPTION_MEMCARD_DIRECTORY,                          OUT_BASE"/memcard",   OPTION_STRING,     "directory to save memory card contents" },
+	{ OPTION_INPUT_DIRECTORY,                            OUT_BASE"/inp",       OPTION_STRING,     "directory to save input device logs" },
+	{ OPTION_STATE_DIRECTORY,                            OUT_BASE"/sta",       OPTION_STRING,     "directory to save states" },
+	{ OPTION_SNAPSHOT_DIRECTORY,                         OUT_BASE"/snap",      OPTION_STRING,     "directory to save screenshots" },
+	{ OPTION_DIFF_DIRECTORY,                             OUT_BASE"/diff",      OPTION_STRING,     "directory to save hard drive image difference files" },
+	{ OPTION_COMMENT_DIRECTORY,                          OUT_BASE"/comments",  OPTION_STRING,     "directory to save debugger comments" },
 
 	// state/playback options
 	{ NULL,                                              NULL,        OPTION_HEADER,     "CORE STATE/PLAYBACK OPTIONS" },
