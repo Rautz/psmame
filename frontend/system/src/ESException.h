@@ -1,7 +1,6 @@
 #ifndef SYSTEM__EXCEPTION_H
 #define SYSTEM__EXCEPTION_H
 
-#ifdef USE_ERRORCHECK
 class					ESException : public std::exception
 {
 	public:
@@ -25,7 +24,6 @@ class					ESException : public std::exception
 	protected:
 		std::string		Error;
 };
-#endif
 
 #endif
 

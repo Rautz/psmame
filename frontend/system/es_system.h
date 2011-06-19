@@ -5,7 +5,6 @@
 #include "src/ESException.h"
 inline void				ErrorCheck					(bool aCondition, const char* aMessage, ...)
 {
-#ifdef USE_ERRORCHECK
 	if(!aCondition)
 	{
 		char buffer[2048];
@@ -17,7 +16,6 @@ inline void				ErrorCheck					(bool aCondition, const char* aMessage, ...)
 
 		throw ESException(buffer);
 	}
-#endif
 }
 
 #include "src/ESThreads.h"

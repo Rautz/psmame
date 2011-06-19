@@ -14,9 +14,9 @@ TARGET				:=	psmess
 TYPE				:=	bin
 PACKAGE				:=	psmess.pkg
 BUILD				:=	build
-SOURCE				:=	src
+SOURCE				:=	src src/tinyxml
 
-INCLUDE				:=	src ../system
+INCLUDE				:=	src src/tinyxml ../system
 LIBDIRS				:=	../system
 LIBS				:=	-lemusys-$(PLATFORM)
 

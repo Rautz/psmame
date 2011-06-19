@@ -37,4 +37,10 @@ pkg: $(BUILD)-cell
 	@$(MAKE_SELF_GH) loader.elf pkg/USRDIR/EBOOT.BIN UP0001-MAME90000_00-0000000000000000	
 	@$(MAKE_SELF_WC) psmame-cell.elf pkg/USRDIR/frontend.self
 	@$(PKG) --contentid $(CONTENTID) pkg/ $(OUTPUT).pkg
+
+pkg-mess: $(BUILD)-cell
+	@$(CXX) loader/loader.cpp -o loader.elf -lfs_stub
+	@$(MAKE_SELF_GH) loader.elf pkg/USRDIR/EBOOT.BIN UP0001-MESS90000_00-0000000000000000	
+	@$(MAKE_SELF_WC) psmess-cell.elf pkg/USRDIR/frontend.self
+	@$(PKG) --contentid $(CONTENTID) pkg/ $(OUTPUT).pkg
 	

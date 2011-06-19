@@ -131,7 +131,11 @@ int main(int argc, char *argv[])
 	if(!QuitThruXMB)
 	{
 		const char* args[2] = {"-showlog", 0};
+#ifdef MESS
+		sys_game_process_exitspawn2("/dev_hdd0/game/MESS90000/USRDIR/frontend.self", (res == MAMERR_NONE) ? NULL : args, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
+#else
 		sys_game_process_exitspawn2("/dev_hdd0/game/MAME90000/USRDIR/frontend.self", (res == MAMERR_NONE) ? NULL : args, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
+#endif
 	}
 	else
 	{
