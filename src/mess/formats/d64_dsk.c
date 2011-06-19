@@ -23,6 +23,10 @@
 #include "formats/d64_dsk.h"
 #include "imagedev/flopdrv.h"
 
+#ifdef __CELLOS_LV2__ //Need alloca.h
+#include <alloca.h>
+#endif
+
 /***************************************************************************
     PARAMETERS
 ***************************************************************************/
