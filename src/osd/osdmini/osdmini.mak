@@ -45,9 +45,9 @@
 MINISRC = $(SRC)/osd/$(OSD)
 MINIOBJ = $(OBJ)/osd/$(OSD)
 
-OBJDIRS += $(MINIOBJ) $(MINIOBJ)/system/src $(MINIOBJ)/system/cell $(MINIOBJ)/system/opengl_common
+OBJDIRS += $(MINIOBJ) $(MINIOBJ)/system/src $(MINIOBJ)/system/cell
 CCOMFLAGS += -DMDCELL -DPSGL -I$(SRC)/osd/$(OSD)/system
-LIBS += -L$(CELL_SDK)/target/ppu/lib -L$(CELL_SDK)/target/ppu/lib/PSGL/RSX/ultra-opt -lPSGLFX -lPSGL -lPSGLU -lm -lnet_stub -lfs_stub -lio_stub -lsysutil_stub -lsysmodule_stub -lgcm_cmd -lresc_stub -lgcm_sys_stub -laudio_stub -lspurs_stub -lmstreamThreadMP3
+LIBS += -L$(CELL_SDK)/target/ppu/lib -L$(CELL_SDK)/target/ppu/lib/PSGL/RSX/ultra-opt -lPSGL -lm -lnet_stub -lfs_stub -lio_stub -lsysutil_stub -lsysmodule_stub -lgcm_cmd -lresc_stub -lgcm_sys_stub -laudio_stub -lspurs_stub -lmstreamThreadMP3
 
 #-------------------------------------------------
 # OSD core library
@@ -60,9 +60,6 @@ OSDCOREOBJS = \
 	$(MINIOBJ)/minitime.o \
 	$(MINIOBJ)/miniwork.o \
 	$(MINIOBJ)/system/src/main.o \
-	$(MINIOBJ)/system/opengl_common/ConvertUTF.o \
-	$(MINIOBJ)/system/opengl_common/Shaders.o \
-	$(MINIOBJ)/system/opengl_common/ConvertUTF.o \
 	$(MINIOBJ)/system/cell/main.o \
 	$(MINIOBJ)/system/cell/CellAudio.o \
 	$(MINIOBJ)/system/cell/CellVideo.o \
