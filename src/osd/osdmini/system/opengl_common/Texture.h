@@ -133,7 +133,6 @@ void								Texture::Apply			()
 	if(!Valid)
 	{
 		Valid = true;
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 		glBindBuffer(BUFFER_TARGET_ES, BufferID);
 		glTexImageES(Width, Height);

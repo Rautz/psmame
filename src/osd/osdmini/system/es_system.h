@@ -28,7 +28,6 @@ inline void				ErrorCheck					(bool aCondition, const char* aMessage, ...)
 #include "src/ESNetwork.h"
 #include "src/main.h"
 
-#if defined(MDCELL)
 # include "cell/CellPlatform.h"
 # include "cell/CellThreads.h"
 # include "opengl_common/Texture.h"
@@ -36,15 +35,6 @@ inline void				ErrorCheck					(bool aCondition, const char* aMessage, ...)
 # include "cell/CellAudio.h"
 # include "cell/CellInput.h"
 # include "cell/CellNetwork.h"
-#else
-# include "sdl/SDLPlatform.h"
-# include "sdl/SDLThreads.h"
-# include "opengl_common/Texture.h"
-# include "sdl/SDLVideo.h"
-# include "sdl/SDLAudio.h"
-# include "sdl/SDLInput.h"
-# include "sdl/SDLNetwork.h"
-#endif
 
 #include "src/Helpers.h"
 

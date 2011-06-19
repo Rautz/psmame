@@ -88,6 +88,7 @@ static INT32 joypad_axis_state[4][4];
 static UINT32* render_surf;
 static UINT32 render_width;
 static UINT32 render_height;
+static Area outarea;
 static Texture* esTex;
 
 static bool QuitThruXMB;
@@ -182,6 +183,10 @@ static inline void update_render(UINT32 width, UINT32 height)
 		render_surf = (UINT32*)osd_malloc(width * height * 4);
 		esTex = ESVideo::CreateTexture(width, height);
 	}
+
+	INT32 out_width, out_height;
+	our_target->compute_visible_area(ESVideo::GetScreenWidth(), ESVideo::GetScreenHeight(), 1.0f, our_target->orientation(), out_width, out_height);
+	outarea = Area((ESVideo::GetScreenWidth() - out_width) / 2, (ESVideo::GetScreenHeight() - out_height) / 2, out_width, out_height);
 }
 
 
@@ -255,7 +260,7 @@ void mini_osd_interface::update(bool skip_redraw)
 	primlist.release_lock();
 
 	// present
-	ESVideo::PresentFrame(esTex, Area(0, 0, minwidth, minheight), 0, 10);
+	ESVideo::PlaceTexture(esTex, outarea, Area(0, 0, minwidth, minheight));
 	ESVideo::Flip();
 
 	// update input
