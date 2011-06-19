@@ -115,13 +115,9 @@ const osd_directory_entry *osd_readdir(osd_directory *dir)
 
 	//Get file size
 	temp = build_full_path(dir->path, data->d_name);
-#ifndef __CELLOS_LV2__
-	struct stat st;
-	dir->ent.size = stat(temp, &st) ? 0 : st.st_size;
-#else
+
 	CellFsStat st;
 	dir->ent.size = cellFsStat(temp, &st) ? 0 : st.st_size;
-#endif
 
 	osd_free(temp);
 

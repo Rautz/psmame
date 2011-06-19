@@ -206,16 +206,16 @@ void mini_osd_interface::init(running_machine &machine)
 
 		for(int j = 0; j != 16; j ++)
 		{
-			snprintf(buffer, 512, "Button %d", joypad_button_map[j] + 1);
+			snprintf(buffer, 512, "%s", ESInput::GetButtonName(j).c_str());
 			input_device_item_add(devinfo, buffer, &joypad_state[i][j], (input_item_id)(ITEM_ID_BUTTON1 + joypad_button_map[j]), joypad_get_state);
 		}
 
 		for(int j = 0; j != 4; j ++)
 		{
-			input_device_item_add(devinfo, buffer, &joypad_axis_state[i][1], (input_item_id)(ITEM_ID_XAXIS + 0), joypad_get_state);
-			input_device_item_add(devinfo, buffer, &joypad_axis_state[i][0], (input_item_id)(ITEM_ID_XAXIS + 1), joypad_get_state);
-			input_device_item_add(devinfo, buffer, &joypad_axis_state[i][3], (input_item_id)(ITEM_ID_XAXIS + 2), joypad_get_state);
-			input_device_item_add(devinfo, buffer, &joypad_axis_state[i][2], (input_item_id)(ITEM_ID_XAXIS + 3), joypad_get_state);
+			input_device_item_add(devinfo, "Left X Axis", &joypad_axis_state[i][1], (input_item_id)(ITEM_ID_XAXIS + 0), joypad_get_state);
+			input_device_item_add(devinfo, "Left Y Axis", &joypad_axis_state[i][0], (input_item_id)(ITEM_ID_XAXIS + 1), joypad_get_state);
+			input_device_item_add(devinfo, "Right X Axis", &joypad_axis_state[i][3], (input_item_id)(ITEM_ID_XAXIS + 2), joypad_get_state);
+			input_device_item_add(devinfo, "Right Y Axis", &joypad_axis_state[i][2], (input_item_id)(ITEM_ID_XAXIS + 3), joypad_get_state);
 		}
 	}
 }
@@ -298,3 +298,4 @@ static INT32 joypad_get_state(void *device_internal, void *item_internal)
 {
 	return *(INT32*)item_internal;
 }
+

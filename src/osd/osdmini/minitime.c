@@ -55,17 +55,7 @@
 //============================================================
 osd_ticks_t osd_ticks(void)
 {
-#ifndef __CELLOS_LV2__
-	struct timeval    tp;
-	static osd_ticks_t start_sec = 0;
-
-	gettimeofday(&tp, NULL);
-	if (start_sec==0)
-		start_sec = tp.tv_sec;
-	return (tp.tv_sec - start_sec) * (osd_ticks_t) 1000000 + tp.tv_usec;
-#else
 	return sys_time_get_system_time();
-#endif
 }
 
 
@@ -95,11 +85,7 @@ void osd_sleep(osd_ticks_t duration)
 	{
 		// take a couple of msecs off the top for good measure
 		msec -= 2;
-#ifndef __CELLOS_LV2__
-		usleep(msec*1000);
-#else
 		sys_timer_usleep(msec*1000);
-#endif
 	}
 }
 
