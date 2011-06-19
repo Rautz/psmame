@@ -14,5 +14,7 @@ class							Settings
 		static std::string		ROMPath;
 		static bool				Cheats;
 		static bool				SkipGameInfo;
+		static bool				AutoSave;
+		static bool				AutoFrameSkip;
 };
 

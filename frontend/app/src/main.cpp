@@ -23,11 +23,30 @@ class													MAMEListView : public AnchoredListView
 
 			bool result = AnchoredListView::Input();
 
+			//Scroll to next letter
+			if(ESInput::ButtonPressed(0, ES_BUTTON_AUXRIGHT1) || ESInput::ButtonPressed(0, ES_BUTTON_AUXLEFT1))
+			{
+				bool goingUp = ESInput::ButtonPressed(0, ES_BUTTON_AUXLEFT1);
+				char starter = List->GetSelected()->GetText()[0];
+
+				while(List->GetSelection() != (goingUp ? 0 : (List->GetItemCount() - 1)))
+				{
+					if(List->GetSelected()->GetText()[0] != starter)
+					{
+						break;
+					}
+
+					List->SetSelection(List->GetSelection() + (goingUp ? -1 : 1));
+				}
+			}
+
+			//Settings
 			if(ESInput::ButtonDown(0, ES_BUTTON_AUXRIGHT3))
 			{
 				Settings::Do();
 			}
 
+			//Start image update
 			if(currentItem != List->GetSelection())
 			{
 				SwitchTime = Utility::GetTicks();
@@ -37,6 +56,7 @@ class													MAMEListView : public AnchoredListView
 				image->SetImage("");
 			}
 
+			//Finish image image after 250 ms
 			if(NeedSwitch && ((Utility::GetTicks() - SwitchTime) > 250))
 			{
 				char buff[1024];
@@ -211,6 +231,8 @@ int				main		(int argc, char** argv)
 			const char* args[32] = {"-rompath", Settings::ROMPath.c_str()};
 			if(Settings::Cheats) 		args[onArg++] = "-cheat";
 			if(Settings::SkipGameInfo)	args[onArg++] = "-skip_gameinfo";
+			if(Settings::AutoSave)		args[onArg++] = "-autosave";
+			if(Settings::AutoFrameSkip)	args[onArg++] = "-autoframeskip";
 			args[onArg++] = strdup(linelist->GetSelected()->Properties["DRIVER"].c_str());
 
 			sys_game_process_exitspawn2(bin, (const char**)args, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);

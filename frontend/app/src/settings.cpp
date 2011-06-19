@@ -46,6 +46,23 @@ class													SettingView : public AnchoredListView
 		}
 };
 
+
+struct SettingDef
+{
+	const char*			ConfigName;
+	const char*			Description;
+	bool*				Value;
+	SummerfaceItem_Ptr	Item;
+};
+
+SettingDef BoolSettings[] = 
+{
+	{"skipinfo", "Skip Game Info", &Settings::SkipGameInfo},
+	{"cheats", "Enable Cheats", &Settings::Cheats},
+	{"autosave", "Auto Save/Load State", &Settings::AutoSave},
+	{"autoskip", "Enable Auto Frame Skip", &Settings::AutoFrameSkip},
+};
+
 void					Settings::ChooseROMDirectory		()
 {
 	BookmarkList noMarks;
@@ -76,17 +93,20 @@ void					Settings::Do						()
 
 	list->AddItem(boost::make_shared<SummerfaceItem>("Change ROM Directory", ""));
 	list->AddItem(boost::make_shared<SummerfaceItem>("Rescan ROM Directory", ""));
-	SummerfaceItem_Ptr SkipItem = boost::make_shared<BooleanItem>("Skip Game Info", SkipGameInfo);
-	list->AddItem(SkipItem);
 
-	SummerfaceItem_Ptr CheatsItem = boost::make_shared<BooleanItem>("Enable Cheats", Cheats);
-	list->AddItem(CheatsItem);
+	for(int i = 0; i != 4; i ++)
+	{
+		BoolSettings[i].Item = boost::make_shared<BooleanItem>(BoolSettings[i].Description, *(BoolSettings[i].Value));
+		list->AddItem(BoolSettings[i].Item);
+	}
 
 	Summerface::Create("settings", list)->Do();
 	bool wantRestart = false;
 
-	SkipGameInfo = SkipItem->IntProperties["VALUE"];
-	Cheats = CheatsItem->IntProperties["VALUE"];
+	for(int i = 0; i != 4; i ++)
+	{
+		*BoolSettings[i].Value = BoolSettings[i].Item->IntProperties["VALUE"];
+	}
 
 	if(!list->WasCanceled())
 	{
@@ -111,8 +131,11 @@ void					Settings::Read						()
 	ini.LoadFile(CONFIG_FILE);
 
 	ROMPath = std::string(ini.GetValue("psmame", "rompath", ROM_DIR));
-	Cheats = ini.GetBoolValue("psmame", "cheats", false);
-	SkipGameInfo = ini.GetBoolValue("psmame", "skipinfo", false);
+
+	for(int i = 0; i != 4; i ++)
+	{
+		*BoolSettings[i].Value = ini.GetBoolValue("psmame", BoolSettings[i].ConfigName, false);
+	}
 }
 
 void					Settings::Dump						()
@@ -120,8 +143,12 @@ void					Settings::Dump						()
 	CSimpleIniA ini;
 	ini.LoadFile(CONFIG_FILE);
 	ini.SetValue("psmame", "rompath", ROMPath.c_str());
-	ini.SetBoolValue("psmame", "cheats", Cheats);
-	ini.SetBoolValue("psmame", "skipinfo", SkipGameInfo);
+
+	for(int i = 0; i != 4; i ++)
+	{
+		ini.SetBoolValue("psmame", BoolSettings[i].ConfigName, *BoolSettings[i].Value);
+	}
+
 	ini.SaveFile(CONFIG_FILE);	
 }
 
@@ -140,3 +167,6 @@ void					Settings::RestartApp				()
 std::string				Settings::ROMPath;
 bool					Settings::Cheats;
 bool					Settings::SkipGameInfo;
+bool					Settings::AutoSave;
+bool					Settings::AutoFrameSkip;
+
