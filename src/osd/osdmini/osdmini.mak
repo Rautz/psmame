@@ -47,7 +47,7 @@ MINIOBJ = $(OBJ)/osd/$(OSD)
 
 OBJDIRS += $(MINIOBJ) $(MINIOBJ)/system/src $(MINIOBJ)/system/cell
 CCOMFLAGS += -DMDCELL -DPSGL -I$(SRC)/osd/$(OSD)/system
-LIBS += -L$(CELL_SDK)/target/ppu/lib -L$(CELL_SDK)/target/ppu/lib/PSGL/RSX/ultra-opt -lPSGL -lm -lnet_stub -lfs_stub -lio_stub -lsysutil_stub -lsysmodule_stub -lgcm_cmd -lresc_stub -lgcm_sys_stub -laudio_stub -lspurs_stub -lmstreamThreadMP3
+LIBS += -L$(CELL_SDK)/target/ppu/lib -L$(CELL_SDK)/target/ppu/lib/PSGL/RSX/ultra-opt -lPSGL -lm -lnet_stub -lfs_stub -lio_stub -lsysutil_stub -lsysmodule_stub -lgcm_cmd -lresc_stub -lgcm_sys_stub -laudio_stub 
 
 #-------------------------------------------------
 # OSD core library

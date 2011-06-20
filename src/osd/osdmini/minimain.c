@@ -107,7 +107,7 @@ void	CELL_Log(const char* aFormat, va_list aArgs)
 {
 	if(!CELL_LogFile)
 	{
-#ifdef MESS
+#ifndef MESS
 		CELL_LogFile = fopen("/dev_hdd0/game/MAME90000/USRDIR/mame.log", "w");
 #else
 		CELL_LogFile = fopen("/dev_hdd0/game/MESS90000/USRDIR/mess.log", "w");

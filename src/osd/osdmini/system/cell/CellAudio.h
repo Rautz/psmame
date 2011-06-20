@@ -5,7 +5,6 @@
 class								ESAudio
 {
 	public:	
-
 		static void					Initialize				();
 		static void					Shutdown				();
 
@@ -16,7 +15,6 @@ class								ESAudio
 
 	protected:
 		static int					ProcessAudioThread		(void* aAudio);
-		static void					MultiStreamCallback		(int streamNumber, void* userData, int cType, void * pWriteBuffer, int nBufferSize);
 	
 		static const int			BlockCount = 16;
 
@@ -24,10 +22,8 @@ class								ESAudio
 		static ESSemaphore*			Semaphore;
 		static volatile bool		ThreadDie;
 
-		static int32_t				MSChannel;
-		static void*				MSMemory;
-		static void*				MSBuffers[2];
-		static volatile bool		StreamDead;
+		static sys_event_queue_t	QueueID;
+		static sys_ipc_key_t		QueueKey;
 
 		static uint32_t				Port;
 		static CellAudioPortConfig	Config;
