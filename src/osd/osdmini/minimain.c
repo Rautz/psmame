@@ -153,18 +153,34 @@ int main(int argc, char *argv[])
 //============================================================
 static inline void update_input()
 {
-	ESInput::Refresh();
+	CellPadInfo2 PadInfo;
+	CellPadData State;
 
-	for(int i = 0; i != ESInput::PadCount() && i != 4; i ++)
+	//Get pad info
+	cellPadGetInfo2(&PadInfo);
+
+	//Scan all pads
+	for(int i = 0; i != PadInfo.now_connect && i != 4; i ++)
 	{
-		for(int j = 0; j != 16; j ++)
-		{
-			joypad_state[i][j] = ESInput::ButtonPressed(i, j);
-		}
+		//Get data
+		cellPadGetData(i, &State);
 
-		for(int j = 0; j != 4; j ++)
+		//If its a valid list
+		if(State.len != 0)
 		{
-			joypad_axis_state[i][j] = ESInput::GetAxis(i, j) * 512; //?
+			//Grab all buttons
+			uint32_t buttons = State.button[2] | (State.button[3] << 8);
+
+			for(int j = 0; j != 16; j ++, buttons >>= 1)
+			{
+				joypad_state[i][j] = buttons & 1;
+			}
+
+			//Grab all axes
+			joypad_axis_state[i][2] = (State.button[5] - 0x80) * 512;
+			joypad_axis_state[i][3] = (State.button[4] - 0x80) * 512;
+			joypad_axis_state[i][0] = (State.button[7] - 0x80) * 512;
+			joypad_axis_state[i][1] = (State.button[6] - 0x80) * 512;
 		}
 	}
 }
@@ -209,18 +225,21 @@ void mini_osd_interface::init(running_machine &machine)
 	// initialize the video system by allocating a rendering target
 	our_target = machine.render().target_alloc();
 
+	// initialize input
+	cellPadInit(4);	//TODO: Where to quit? The destructor?
+
 	// add game pads
 	for(int i = 0; i != 4; i ++)
 	{
 		char buffer[512];
-
 		snprintf(buffer, 512, "PAD %d", i + 1);
 		input_device *devinfo = input_device_add(machine, DEVICE_CLASS_JOYSTICK, buffer, NULL);
 
+		static const char* const ButtonNames[16] = {"Select", "L3", "R3", "Start", "Up", "Right", "Down", "Left", "L2", "R2", "L1", "R1", "Triangle", "Circle", "Cross", "Square"};	
+
 		for(int j = 0; j != 16; j ++)
 		{
-			snprintf(buffer, 512, "%s", ESInput::GetButtonName(j).c_str());
-			input_device_item_add(devinfo, buffer, &joypad_state[i][j], (input_item_id)(ITEM_ID_BUTTON1 + joypad_button_map[j]), joypad_get_state);
+			input_device_item_add(devinfo, ButtonNames[j], &joypad_state[i][j], (input_item_id)(ITEM_ID_BUTTON1 + joypad_button_map[j]), joypad_get_state);
 		}
 
 		for(int j = 0; j != 4; j ++)

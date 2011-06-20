@@ -24,7 +24,6 @@ inline void				ErrorCheck					(bool aCondition, const char* aMessage, ...)
 #include "src/ESTexture.h"
 #include "src/ESVideo.h"
 #include "src/ESAudio.h"
-#include "src/ESInput.h"
 #include "src/ESNetwork.h"
 #include "src/main.h"
 
@@ -33,7 +32,6 @@ inline void				ErrorCheck					(bool aCondition, const char* aMessage, ...)
 # include "opengl_common/Texture.h"
 # include "cell/CellVideo.h"
 # include "cell/CellAudio.h"
-# include "cell/CellInput.h"
 # include "cell/CellNetwork.h"
 
 #include "src/Helpers.h"

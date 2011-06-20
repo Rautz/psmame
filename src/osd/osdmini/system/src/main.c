@@ -25,12 +25,10 @@ void				InitES					(void (*aExitFunction)())
 	ESNetwork::Initialize();
 	ESVideo::Initialize();
 	ESAudio::Initialize();
-	ESInput::Initialize();
 }
 
 void				QuitES					()
 {
-	ESInput::Shutdown();
 	ESAudio::Shutdown();
 	ESVideo::Shutdown();
 	ESNetwork::Shutdown();
