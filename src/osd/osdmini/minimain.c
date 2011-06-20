@@ -240,36 +240,39 @@ void mini_osd_interface::init(running_machine &machine)
 
 void mini_osd_interface::update(bool skip_redraw)
 {
-	// get the minimum width/height for the current layout
-	int minwidth, minheight;
-	our_target->compute_minimum_size(minwidth, minheight);
+	if(!skip_redraw)
+	{
+		// get the minimum width/height for the current layout
+		int minwidth, minheight;
+		our_target->compute_minimum_size(minwidth, minheight);
 
-	// make that the size of our target
-	our_target->set_bounds(minwidth, minheight);
+		// make that the size of our target
+		our_target->set_bounds(minwidth, minheight);
 
-	// update the render state
-	update_render(minwidth, minheight);
+		// update the render state
+		update_render(minwidth, minheight);
 
-	// get the list of primitives for the target at the current size
-	render_primitive_list &primlist = our_target->get_primitives();
+		// get the list of primitives for the target at the current size
+		render_primitive_list &primlist = our_target->get_primitives();
 
-	// lock them
-	primlist.acquire_lock();
+		// lock them
+		primlist.acquire_lock();
 
-	// draw them
-	draw32_draw_primitives(primlist, render_surf, minwidth, minheight, minwidth);
+		// draw them
+		draw32_draw_primitives(primlist, render_surf, minwidth, minheight, minwidth);
 
-	// upload to gpu texture
-	uint32_t* pix = esTex->Map();
-	memcpy(pix, render_surf, minwidth * minheight * 4);
-	esTex->Unmap();
+		// upload to gpu texture
+		uint32_t* pix = esTex->Map();
+		memcpy(pix, render_surf, minwidth * minheight * 4);
+		esTex->Unmap();
 
-	// unlock the primitives
-	primlist.release_lock();
+		// unlock the primitives
+		primlist.release_lock();
 
-	// present
-	ESVideo::PlaceTexture(esTex, outarea, Area(0, 0, minwidth, minheight));
-	ESVideo::Flip();
+		// present
+		ESVideo::PlaceTexture(esTex, outarea, Area(0, 0, minwidth, minheight));
+		ESVideo::Flip();
+	}
 
 	// update input
 	update_input();
