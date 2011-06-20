@@ -1050,9 +1050,9 @@ $(CPUOBJ)/m68000/%.o: $(CPUOBJ)/m68000/%.c | $(OSPREBUILD)
 	$(CC) $(CDEFS) $(CFLAGS) -I$(CPUSRC)/m68000 -c $< -o $@
 
 # rule to generate the C files
-$(CPUOBJ)/m68000/m68kops.c: $(M68KMAKE) $(CPUSRC)/m68000/m68k_in.c
+$(CPUOBJ)/m68000/m68kops.c: $(CPUSRC)/m68000/m68k_in.c
 	@echo Generating M68K source files...
-	$(M68KMAKE) $(CPUOBJ)/m68000 $(CPUSRC)/m68000/m68k_in.c
+	build/m68kmake $(CPUOBJ)/m68000 $(CPUSRC)/m68000/m68k_in.c
 
 # rule to build the generator
 ifneq ($(CROSS_BUILD),1)
@@ -1650,9 +1650,9 @@ $(CPUOBJ)/tms57002/57002dsm.o:	$(CPUSRC)/tms57002/57002dsm.c \
 								$(CPUOBJ)/tms57002/tms57002.inc
 
 # rule to generate the C file
-$(CPUOBJ)/tms57002/tms57002.inc: $(TMSMAKE) $(CPUSRC)/tms57002/tmsinstr.lst
+$(CPUOBJ)/tms57002/tms57002.inc: $(CPUSRC)/tms57002/tmsinstr.lst
 	@echo Generating TMS57002 source file...
-	$(TMSMAKE) $(CPUSRC)/tms57002/tmsinstr.lst $@
+	build/tmsmake $(CPUSRC)/tms57002/tmsinstr.lst $@
 
 # rule to build the generator
 ifneq ($(CROSS_BUILD),1)

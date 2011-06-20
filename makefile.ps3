@@ -664,9 +664,9 @@ buildtools: maketree $(BUILD)
 
 # In order to keep dependencies reasonable, we exclude objects in the base of
 # $(SRC)/emu, as well as all the OSD objects and anything in the $(OBJ) tree
-depend: maketree $(MAKEDEP_TARGET)
+depend: maketree 
 	@echo Rebuilding depend.mak...
-	$(MAKEDEP) -I. $(INCPATH) -X$(SRC)/emu -X$(SRC)/osd/... -X$(OBJ)/... src/$(TARGET) > depend.mak
+	build/makedep -I. $(INCPATH) -X$(SRC)/emu -X$(SRC)/osd/... -X$(OBJ)/... src/$(TARGET) > depend.mak
 
 INCPATH += \
 	-I$(SRC)/$(TARGET) \
@@ -752,14 +752,14 @@ $(OBJ)/%.s: $(SRC)/%.c | $(OSPREBUILD)
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -S $< -o $@
 
-$(OBJ)/%.lh: $(SRC)/%.lay $(FILE2STR_TARGET)
+$(OBJ)/%.lh: $(SRC)/%.lay # $(FILE2STR_TARGET)
 	@echo Converting $<...
-	@$(FILE2STR) $< $@ layout_$(basename $(notdir $<))
+	@build/file2str $< $@ layout_$(basename $(notdir $<))
 
-$(OBJ)/%.fh: $(SRC)/%.png $(PNG2BDC_TARGET) $(FILE2STR_TARGET)
+$(OBJ)/%.fh: $(SRC)/%.png #$(PNG2BDC_TARGET) $(FILE2STR_TARGET)
 	@echo Converting $<...
-	@$(PNG2BDC) $< $(OBJ)/temp.bdc
-	@$(FILE2STR) $(OBJ)/temp.bdc $@ font_$(basename $(notdir $<)) UINT8
+	@build/png2bdc $< $(OBJ)/temp.bdc
+	@build/file2str $(OBJ)/temp.bdc $@ font_$(basename $(notdir $<)) UINT8
 
 $(OBJ)/%.a:
 	@echo Archiving $@...
