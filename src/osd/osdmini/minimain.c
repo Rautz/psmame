@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
 static inline void init_video()
 {
 	//Init PSGL
-	PSGLinitOptions initOpts = {PSGL_INIT_MAX_SPUS | PSGL_INIT_HOST_MEMORY_SIZE, 1, false, 0, 0, 0, 0, 32 * 1024 * 1024};
+	PSGLinitOptions initOpts = {PSGL_INIT_MAX_SPUS, 1, false, 0, 0, 0, 0, 0};
 	psglInit(&initOpts);
 	
 	Device = psglCreateDeviceAuto(GL_ARGB_SCE, GL_NONE, GL_MULTISAMPLING_NONE_SCE);

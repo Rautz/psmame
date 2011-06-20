@@ -143,6 +143,8 @@ int				main		(int argc, char** argv)
 			boost::shared_ptr<TextViewer> tview = boost::make_shared<TextViewer>(Area(10, 10, 80, 80), LOG_FILE);
 			tview->SetHeader("MESS Log");
 			Summerface::Create("Viewer", tview)->Do();
+
+			remove(LOG_FILE);
 		}
 
 		Settings::Read();
