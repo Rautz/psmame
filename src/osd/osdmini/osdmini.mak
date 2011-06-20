@@ -62,11 +62,8 @@ OSDCOREOBJS = \
 	$(MINIOBJ)/system/src/main.o \
 	$(MINIOBJ)/system/cell/main.o \
 	$(MINIOBJ)/system/cell/CellAudio.o \
-	$(MINIOBJ)/system/cell/CellVideo.o \
-	$(MINIOBJ)/system/cell/CellInput.o \
 	$(MINIOBJ)/system/cell/CellNetwork.o \
-	$(MINIOBJ)/system/cell/CellThreads.o \
-	$(MINIOBJ)/system/cell/CellVideo.o 
+	$(MINIOBJ)/system/cell/CellThreads.o
 
 
 

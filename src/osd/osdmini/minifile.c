@@ -41,6 +41,57 @@
 
 #include "osdcore.h"
 #include <stdlib.h>
+#include <alloca.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <cell/cell_fs.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <errno.h>
+
+struct _osd_file
+{
+	int	handle;
+	char filename[1];
+};
+
+
+//============================================================
+//  Prototypes
+//============================================================
+
+static UINT32 create_path_recursive(char *path);
+
+//============================================================
+//  error_to_file_error
+//  (does filling this out on non-Windows make any sense?)
+//============================================================
+
+file_error error_to_file_error(UINT32 error)
+{
+	switch (error)
+	{
+	case ENOENT:
+	case ENOTDIR:
+		return FILERR_NOT_FOUND;
+
+	case EACCES:
+	case EROFS:
+	case EEXIST:
+	case EPERM:
+	case EISDIR:
+	case EINVAL:
+		return FILERR_ACCESS_DENIED;
+
+	case ENFILE:
+	case EMFILE:
+		return FILERR_TOO_MANY_FILES;
+
+	default:
+		return FILERR_FAILURE;
+	}
+}
 
 
 //============================================================
@@ -49,34 +100,144 @@
 
 file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UINT64 *filesize)
 {
-	const char *mode;
-	FILE *fileptr;
+	UINT32 access;
+	const char *src;
+	char *dst;
+	struct stat st;
+	char *tmpstr;
+	int i, j;
+	file_error filerr = FILERR_NONE;
 
-	// based on the flags, choose a mode
+	// allocate a file object, plus space for the converted filename
+	*file = (osd_file *) osd_malloc(sizeof(**file) + sizeof(char) * strlen(path));
+	if(*file == NULL)
+	{
+		filerr = FILERR_OUT_OF_MEMORY;
+		goto error;
+	}
+
+	// convert the path into something compatible
+	dst = (*file)->filename;
+	for(src = path; *src != 0; src++)
+	{
+		*dst++ = (*src == '\\') ? '/' : *src;
+	}
+	*dst++ = 0;
+
+	// select the file open modes
 	if (openflags & OPEN_FLAG_WRITE)
 	{
-		if (openflags & OPEN_FLAG_READ)
-			mode = (openflags & OPEN_FLAG_CREATE) ? "w+b" : "r+b";
-		else
-			mode = "wb";
+		access = (openflags & OPEN_FLAG_READ) ? O_RDWR : O_WRONLY;
+		access |= (openflags & OPEN_FLAG_CREATE) ? (O_CREAT | O_TRUNC) : 0;
 	}
 	else if (openflags & OPEN_FLAG_READ)
-		mode = "rb";
+	{
+		access = O_RDONLY;
+	}
 	else
-		return FILERR_INVALID_ACCESS;
+	{
+		filerr = FILERR_INVALID_ACCESS;
+		goto error;
+	}
 
-	// open the file
-	fileptr = fopen(path, mode);
-	if (fileptr == NULL)
-		return FILERR_NOT_FOUND;
+	tmpstr = (char*)alloca(strlen((*file)->filename)+1);
+	strcpy(tmpstr, (*file)->filename);
 
-	// store the file pointer directly as an osd_file
-	*file = (osd_file *)fileptr;
+	// attempt to open the file
+	(*file)->handle = open(tmpstr, access, 0666);
+	if ((*file)->handle == -1)
+	{
+		// create the path if necessary
+		if ((openflags & OPEN_FLAG_CREATE) && (openflags & OPEN_FLAG_CREATE_PATHS))
+		{
+			char *pathsep = strrchr(tmpstr, '/');
+			if (pathsep != NULL)
+			{
+				int error;
 
-	// get the size -- note that most fseek/ftell implementations are limited to 32 bits
-	fseek(fileptr, 0, SEEK_END);
-	*filesize = ftell(fileptr);
-	fseek(fileptr, 0, SEEK_SET);
+				// create the path up to the file
+				*pathsep = 0;
+				error = create_path_recursive(tmpstr);
+				*pathsep = '/';
+
+				// attempt to reopen the file
+				if(!error)
+				{
+					(*file)->handle = open(tmpstr, access, 0666);
+				}
+			}
+		}
+
+		// if we still failed, clean up and osd_free
+		if ((*file)->handle == -1)
+		{
+			osd_free(*file);
+			*file = NULL;
+			return error_to_file_error(errno);
+		}
+	}
+
+	// get the file size
+	fstat((*file)->handle, &st);
+	*filesize = (UINT64)st.st_size;
+
+error:
+	// cleanup
+	if (filerr != FILERR_NONE && *file != NULL)
+	{
+		osd_free(*file);
+		*file = NULL;
+	}
+
+	return filerr;
+}
+
+
+//============================================================
+//  osd_read
+//============================================================
+
+file_error osd_read(osd_file *file, void *buffer, UINT64 offset, UINT32 count, UINT32 *actual)
+{
+	ssize_t result;
+
+	lseek(file->handle, (UINT32)offset&0xFFFFFFFF, SEEK_SET);
+	result = read(file->handle, buffer, count);
+	
+	if(result < 0)
+	{
+		return error_to_file_error(errno);
+	}
+
+	if(actual)
+	{
+		*actual = result;
+	}
+
+	return FILERR_NONE;
+}
+
+
+//============================================================
+//  osd_write
+//============================================================
+
+file_error osd_write(osd_file *file, const void *buffer, UINT64 offset, UINT32 count, UINT32 *actual)
+{
+	UINT32 result;
+
+	lseek(file->handle, (UINT32)offset&0xFFFFFFFF, SEEK_SET);
+	result = write(file->handle, buffer, count);
+
+	if(!result)
+	{
+		return error_to_file_error(errno);
+	}
+
+	if(actual)
+	{
+		*actual = result;
+	}
 
 	return FILERR_NONE;
 }
@@ -88,48 +249,8 @@ file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UINT64 
 
 file_error osd_close(osd_file *file)
 {
-	// close the file handle
-	fclose((FILE *)file);
-	return FILERR_NONE;
-}
-
-
-//============================================================
-//  osd_read
-//============================================================
-
-file_error osd_read(osd_file *file, void *buffer, UINT64 offset, UINT32 length, UINT32 *actual)
-{
-	size_t count;
-
-	// seek to the new location; note that most fseek implementations are limited to 32 bits
-	fseek((FILE *)file, offset, SEEK_SET);
-
-	// perform the read
-	count = fread(buffer, 1, length, (FILE *)file);
-	if (actual != NULL)
-		*actual = count;
-
-	return FILERR_NONE;
-}
-
-
-//============================================================
-//  osd_write
-//============================================================
-
-file_error osd_write(osd_file *file, const void *buffer, UINT64 offset, UINT32 length, UINT32 *actual)
-{
-	size_t count;
-
-	// seek to the new location; note that most fseek implementations are limited to 32 bits
-	fseek((FILE *)file, offset, SEEK_SET);
-
-	// perform the write
-	count = fwrite(buffer, 1, length, (FILE *)file);
-	if (actual != NULL)
-		*actual = count;
-
+	close(file->handle);
+	osd_free(file);
 	return FILERR_NONE;
 }
 
@@ -150,8 +271,6 @@ file_error osd_rmfile(const char *filename)
 
 int osd_get_physical_drive_geometry(const char *filename, UINT32 *cylinders, UINT32 *heads, UINT32 *sectors, UINT32 *bps)
 {
-	// there is no standard way of doing this, so we always return FALSE, indicating
-	// that a given path is not a physical drive
 	return FALSE;
 }
 
@@ -162,9 +281,11 @@ int osd_get_physical_drive_geometry(const char *filename, UINT32 *cylinders, UIN
 
 int osd_uchar_from_osdchar(UINT32 /* unicode_char */ *uchar, const char *osdchar, size_t count)
 {
-	// we assume a standard 1:1 mapping of characters to the first 256 unicode characters
-	*uchar = (UINT8)*osdchar;
-	return 1;
+	wchar_t wch;
+	count = mbstowcs(&wch, (char *)osdchar, 1);
+
+	*uchar = (count != -1) ? wch : 0;
+	return count;
 }
 
 
@@ -174,24 +295,21 @@ int osd_uchar_from_osdchar(UINT32 /* unicode_char */ *uchar, const char *osdchar
 
 osd_directory_entry *osd_stat(const char *path)
 {
-	osd_directory_entry *result = NULL;
+	CellFsStat st;
+	if(cellFsStat(path, &st) != CELL_OK)
+	{
+		return 0;
+	}
 
 	// create an osd_directory_entry; be sure to make sure that the caller can
 	// free all resources by just freeing the resulting osd_directory_entry
-	result = (osd_directory_entry *)malloc(sizeof(*result) + strlen(path) + 1);
-	strcpy((char *)(result + 1), path);
-	result->name = (char *)(result + 1);
-	result->type = ENTTYPE_NONE;
-	result->size = 0;
+	osd_directory_entry *result = (osd_directory_entry*)osd_malloc(sizeof(*result) + strlen(path) + 1);
+	strcpy(((char*)result) + sizeof(*result), path);
+	result->name = ((char *)result) + sizeof(*result);
 
-	FILE *f = fopen(path, "rb");
-	if (f != NULL)
-	{
-		fseek(f, 0, SEEK_END);
-		result->type = ENTTYPE_FILE;
-		result->size = ftell(f);
-		fclose(f);
-	}
+	result->type = (st.st_mode & CELL_FS_S_IFDIR) ? ENTTYPE_DIR : ENTTYPE_FILE;
+	result->size = st.st_size;
+
 	return result;
 }
 
@@ -215,6 +333,36 @@ file_error osd_get_full_path(char **dst, const char *path)
 
 const char *osd_get_volume_name(int idx)
 {
-	// we don't expose volumes
-	return NULL;
+	return (idx == 0) ? "/" : 0;
 }
+
+//============================================================
+//  create_path_recursive
+//============================================================
+
+static UINT32 create_path_recursive(char *path)
+{
+	char *sep = strrchr(path, '/');
+	UINT32 filerr;
+	struct stat st;
+
+	// if there's still a separator, and it's not the root, nuke it and recurse
+	if (sep != NULL && sep > path && sep[0] != ':' && sep[-1] != '/')
+	{
+		*sep = 0;
+		filerr = create_path_recursive(path);
+		*sep = '/';
+		if (filerr != 0)
+			return filerr;
+	}
+
+	// if the path already exists, we're done
+	if (!stat(path, &st))
+		return 0;
+
+	// create the path
+	if (mkdir(path, 0777) != 0)
+		return error_to_file_error(errno);
+	return 0;
+}
+

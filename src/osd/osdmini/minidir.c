@@ -43,11 +43,7 @@
 #include <dirent.h>
 #include <stdlib.h>
 #include <string.h>
-#ifndef __CELLOS_LV2__
-#include <sys/stat.h>
-#else
 #include <cell/cell_fs.h>
-#endif
 
 #include "osdcore.h"
 
