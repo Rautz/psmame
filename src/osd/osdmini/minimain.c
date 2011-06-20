@@ -85,18 +85,13 @@ static INT32 joypad_state[4][16];
 static INT32 joypad_axis_state[4][4];
 
 // render data
-static UINT32* render_surf;
-static UINT32 render_width;
-static UINT32 render_height;
+static UINT32* render_surf, render_width, render_height;
 static PSGLdevice* Device;
 static PSGLcontext* Context;
-static UINT32 screen_width;
-static UINT32 screen_height;
-static GLfloat out_x, out_y, out_x2, out_y2;
+static UINT32 screen_width, screen_height;
 static INT32 out_width, out_height;
 static Texture* esTex;
-static GLfloat* vertex_buffer;
-
+static GLuint vertex_buffer;
 static bool QuitThruXMB;
 
 //============================================================
@@ -182,12 +177,14 @@ static inline void init_video()
 	glOrthof(0, screen_width, screen_height, 0, -1, 1);
 
 	// Setup vertex buffer
-	vertex_buffer = (GLfloat*)memalign(128, 20 * sizeof(GLfloat));
+	glGenBuffers(1, &vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER, 20 * sizeof(GLfloat), 0, GL_STATIC_DRAW);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glVertexPointer(3, GL_FLOAT, 5 * sizeof(GLfloat), &vertex_buffer[0]);
-	glTexCoordPointer(2, GL_FLOAT, 5 * sizeof(GLfloat), &vertex_buffer[3]);
+	glVertexPointer(3, GL_FLOAT, 5 * sizeof(GLfloat), 0);
+	glTexCoordPointer(2, GL_FLOAT, 5 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
 }
 
 static inline void SetVertex(GLfloat* aBase, float aX, float aY, float aU, float aV)
@@ -244,17 +241,11 @@ static inline void update_input()
 //============================================================
 static inline void update_render(UINT32 width, UINT32 height)
 {
+	//Check game screen size
 	if(render_width != width || render_height != height)
 	{
-		if(render_surf)
-		{
-			osd_free(render_surf);
-		}
-
-		if(esTex)
-		{
-			delete esTex;
-		}
+		osd_free(render_surf);	//Freeing and delete zero is a-ok
+		delete esTex;
 
 		render_width = width;
 		render_height = height;
@@ -262,12 +253,28 @@ static inline void update_render(UINT32 width, UINT32 height)
 		esTex = new Texture(width, height);
 	}
 
-	our_target->compute_visible_area(screen_width, screen_height, 1.0f, our_target->orientation(), out_width, out_height);
+	//Check game output region
+	INT32 newwidth, newheight;
+	our_target->compute_visible_area(screen_width, screen_height, 1.0f, our_target->orientation(), newwidth, newheight);
 
-	out_x = (screen_width - out_width) / 2;
-	out_y = (screen_height - out_height) / 2;
-	out_x2 = out_x + out_width;
-	out_y2 = out_y + out_height;		
+	if(newwidth != out_width || newheight != out_height)
+	{
+		out_width = newwidth;
+		out_height = newheight;
+
+		float verts[20];
+		float out_x = (screen_width - out_width) / 2;
+		float out_y = (screen_height - out_height) / 2;
+		float out_x2 = out_x + out_width;
+		float out_y2 = out_y + out_height;		
+
+		SetVertex(&verts[ 0], out_x, out_y, 0.0f, 0.0f);
+		SetVertex(&verts[ 5], out_x2, out_y, 1.0f, 0.0f);
+		SetVertex(&verts[10], out_x2, out_y2, 1.0f, 1.0f);
+		SetVertex(&verts[15], out_x, out_y2, 0.0f, 1.0f);
+
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(verts), verts);
+	}
 }
 
 
@@ -324,20 +331,14 @@ void mini_osd_interface::update(bool skip_redraw)
 		// get the minimum width/height for the current layout
 		int minwidth, minheight;
 		our_target->compute_minimum_size(minwidth, minheight);
-
-		// make that the size of our target
 		our_target->set_bounds(minwidth, minheight);
 
 		// update the render state
 		update_render(minwidth, minheight);
 
-		// get the list of primitives for the target at the current size
+		// get the list of primitives for the target at the current size and draw them
 		render_primitive_list &primlist = our_target->get_primitives();
-
-		// lock them
 		primlist.acquire_lock();
-
-		// draw them
 		draw32_draw_primitives(primlist, render_surf, minwidth, minheight, minwidth);
 
 		// upload to gpu texture
@@ -350,11 +351,6 @@ void mini_osd_interface::update(bool skip_redraw)
 
 		// present
 		esTex->Apply();
-		SetVertex(&vertex_buffer[ 0], out_x, out_y, 0.0f, 0.0f);
-		SetVertex(&vertex_buffer[ 5], out_x2, out_y, 1.0f, 0.0f);
-		SetVertex(&vertex_buffer[10], out_x2, out_y2, 1.0f, 1.0f);
-		SetVertex(&vertex_buffer[15], out_x, out_y2, 0.0f, 1.0f);
-
 		glDrawArrays(GL_QUADS, 0, 4);
 
 		psglSwap();
