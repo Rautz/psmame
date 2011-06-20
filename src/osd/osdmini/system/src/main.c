@@ -23,14 +23,12 @@ void				InitES					(void (*aExitFunction)())
 
 	es_threads = ESSUB_MakeThreads();
 	ESNetwork::Initialize();
-	ESVideo::Initialize();
 	ESAudio::Initialize();
 }
 
 void				QuitES					()
 {
 	ESAudio::Shutdown();
-	ESVideo::Shutdown();
 	ESNetwork::Shutdown();
 	delete es_threads;
 

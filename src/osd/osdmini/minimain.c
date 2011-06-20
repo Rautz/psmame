@@ -88,8 +88,14 @@ static INT32 joypad_axis_state[4][4];
 static UINT32* render_surf;
 static UINT32 render_width;
 static UINT32 render_height;
-static Area outarea;
+static PSGLdevice* Device;
+static PSGLcontext* Context;
+static UINT32 screen_width;
+static UINT32 screen_height;
+static GLfloat out_x, out_y, out_x2, out_y2;
+static INT32 out_width, out_height;
 static Texture* esTex;
+static GLfloat* vertex_buffer;
 
 static bool QuitThruXMB;
 
@@ -148,6 +154,54 @@ int main(int argc, char *argv[])
 	}
 }
 
+//
+//  init video
+//
+static inline void init_video()
+{
+	//Init PSGL
+	PSGLinitOptions initOpts = {PSGL_INIT_MAX_SPUS | PSGL_INIT_HOST_MEMORY_SIZE, 1, false, 0, 0, 0, 0, 32 * 1024 * 1024};
+	psglInit(&initOpts);
+	
+	Device = psglCreateDeviceAuto(GL_ARGB_SCE, GL_NONE, GL_MULTISAMPLING_NONE_SCE);
+	Context = psglCreateContext();
+	psglMakeCurrent(Context, Device);
+	psglResetCurrentContext();
+
+	//Get Screen Info
+	psglGetRenderBufferDimensions(Device, &screen_width, &screen_height);
+	glViewport(0, 0, screen_width, screen_height);
+
+	//Some settings
+	glClearColor(0, 0, 0, 0);
+	glEnable(GL_VSYNC_SCE);
+
+	//Setup Projection
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrthof(0, screen_width, screen_height, 0, -1, 1);
+
+	// Setup vertex buffer
+	vertex_buffer = (GLfloat*)memalign(128, 20 * sizeof(GLfloat));
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glVertexPointer(3, GL_FLOAT, 5 * sizeof(GLfloat), &vertex_buffer[0]);
+	glTexCoordPointer(2, GL_FLOAT, 5 * sizeof(GLfloat), &vertex_buffer[3]);
+}
+
+static inline void SetVertex(GLfloat* aBase, float aX, float aY, float aU, float aV)
+{
+	*aBase++ = aX; *aBase++ = aY; *aBase++ = 0.0f;
+	*aBase++ = aU; *aBase++ = aV;
+}
+
+//TODO: Exit video
+//	psglDestroyContext(Context);
+//	psglDestroyDevice(Device);
+//	psglExit();						
+//	free(vertex_buffer);
+
 //============================================================
 //  update input
 //============================================================
@@ -205,12 +259,15 @@ static inline void update_render(UINT32 width, UINT32 height)
 		render_width = width;
 		render_height = height;
 		render_surf = (UINT32*)osd_malloc(width * height * 4);
-		esTex = ESVideo::CreateTexture(width, height);
+		esTex = new Texture(width, height);
 	}
 
-	INT32 out_width, out_height;
-	our_target->compute_visible_area(ESVideo::GetScreenWidth(), ESVideo::GetScreenHeight(), 1.0f, our_target->orientation(), out_width, out_height);
-	outarea = Area((ESVideo::GetScreenWidth() - out_width) / 2, (ESVideo::GetScreenHeight() - out_height) / 2, out_width, out_height);
+	our_target->compute_visible_area(screen_width, screen_height, 1.0f, our_target->orientation(), out_width, out_height);
+
+	out_x = (screen_width - out_width) / 2;
+	out_y = (screen_height - out_height) / 2;
+	out_x2 = out_x + out_width;
+	out_y2 = out_y + out_height;		
 }
 
 
@@ -221,6 +278,9 @@ void mini_osd_interface::init(running_machine &machine)
 {
 	// call our parent
 	osd_interface::init(machine);
+
+	// initialize psgl
+	init_video();
 
 	// initialize the video system by allocating a rendering target
 	our_target = machine.render().target_alloc();
@@ -289,8 +349,16 @@ void mini_osd_interface::update(bool skip_redraw)
 		primlist.release_lock();
 
 		// present
-		ESVideo::PlaceTexture(esTex, outarea, Area(0, 0, minwidth, minheight));
-		ESVideo::Flip();
+		esTex->Apply();
+		SetVertex(&vertex_buffer[ 0], out_x, out_y, 0.0f, 0.0f);
+		SetVertex(&vertex_buffer[ 5], out_x2, out_y, 1.0f, 0.0f);
+		SetVertex(&vertex_buffer[10], out_x2, out_y2, 1.0f, 1.0f);
+		SetVertex(&vertex_buffer[15], out_x, out_y2, 0.0f, 1.0f);
+
+		glDrawArrays(GL_QUADS, 0, 4);
+
+		psglSwap();
+		glClear(GL_COLOR_BUFFER_BIT); //Better to clear now or at front of function?
 	}
 
 	// update input
