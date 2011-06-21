@@ -233,7 +233,6 @@ int				main		(int argc, char** argv)
 			const char* args[32] = {"-rompath", Settings::ROMPath.c_str()};
 			if(Settings::Cheats) 		args[onArg++] = "-cheat";
 			if(Settings::SkipGameInfo)	args[onArg++] = "-skip_gameinfo";
-			if(Settings::AutoSave)		args[onArg++] = "-autosave";
 			if(Settings::AutoFrameSkip)	args[onArg++] = "-autoframeskip";
 			args[onArg++] = strdup(linelist->GetSelected()->Properties["DRIVER"].c_str());
 

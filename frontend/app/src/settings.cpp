@@ -59,7 +59,6 @@ SettingDef BoolSettings[] =
 {
 	{"skipinfo", "Skip Game Info", &Settings::SkipGameInfo},
 	{"cheats", "Enable Cheats", &Settings::Cheats},
-	{"autosave", "Auto Save/Load State", &Settings::AutoSave},
 	{"autoskip", "Enable Auto Frame Skip", &Settings::AutoFrameSkip},
 };
 
@@ -94,7 +93,7 @@ void					Settings::Do						()
 	list->AddItem(boost::make_shared<SummerfaceItem>("Change ROM Directory", ""));
 	list->AddItem(boost::make_shared<SummerfaceItem>("Rescan ROM Directory", ""));
 
-	for(int i = 0; i != 4; i ++)
+	for(int i = 0; i != 3; i ++)
 	{
 		BoolSettings[i].Item = boost::make_shared<BooleanItem>(BoolSettings[i].Description, *(BoolSettings[i].Value));
 		list->AddItem(BoolSettings[i].Item);
@@ -103,7 +102,7 @@ void					Settings::Do						()
 	Summerface::Create("settings", list)->Do();
 	bool wantRestart = false;
 
-	for(int i = 0; i != 4; i ++)
+	for(int i = 0; i != 3; i ++)
 	{
 		*BoolSettings[i].Value = BoolSettings[i].Item->IntProperties["VALUE"];
 	}
@@ -132,7 +131,7 @@ void					Settings::Read						()
 
 	ROMPath = std::string(ini.GetValue("psmame", "rompath", ROM_DIR));
 
-	for(int i = 0; i != 4; i ++)
+	for(int i = 0; i != 3; i ++)
 	{
 		*BoolSettings[i].Value = ini.GetBoolValue("psmame", BoolSettings[i].ConfigName, false);
 	}
@@ -144,7 +143,7 @@ void					Settings::Dump						()
 	ini.LoadFile(CONFIG_FILE);
 	ini.SetValue("psmame", "rompath", ROMPath.c_str());
 
-	for(int i = 0; i != 4; i ++)
+	for(int i = 0; i != 3; i ++)
 	{
 		ini.SetBoolValue("psmame", BoolSettings[i].ConfigName, *BoolSettings[i].Value);
 	}
@@ -167,6 +166,5 @@ void					Settings::RestartApp				()
 std::string				Settings::ROMPath;
 bool					Settings::Cheats;
 bool					Settings::SkipGameInfo;
-bool					Settings::AutoSave;
 bool					Settings::AutoFrameSkip;
 
