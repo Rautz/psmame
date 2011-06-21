@@ -389,10 +389,10 @@ void mini_osd_interface::update(bool skip_redraw)
 
 		psglSwap();
 		glClear(GL_COLOR_BUFFER_BIT); //Better to clear now or at front of function?
-
-		// tick the watchdog
-		watchdog::tick();
 	}
+
+	// tick the watchdog
+	watchdog::tick();
 
 	// update input
 	update_input();
