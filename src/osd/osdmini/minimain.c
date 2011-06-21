@@ -102,41 +102,11 @@ static GLuint vertex_buffer;
 static bool QuitThruXMB;
 
 // Watch dog
-static ESThread* watchdog_thread;
-static ESMutex* watchdog_mutex;
-static int64_t watchdog_timer;
-static bool watchdog_death;
-
-int watchdog_routine(void* aBcD)
-{
-	watchdog_mutex->Lock();
-	int64_t thenticks = watchdog_timer;
-	watchdog_mutex->Unlock();
-
-	while(!watchdog_death)
-	{
-		Utility::Sleep(5000);
-
-		watchdog_mutex->Lock();
-		int64_t nowticks = watchdog_timer;
-		watchdog_mutex->Unlock();
-
-		if(nowticks == thenticks)
-		{
-			const char* args[2] = {"-showlog", 0};
-			CELL_Log("Watchdog activated: No updates for 5 seconds. Crashed?");
-#ifdef MESS
-			sys_game_process_exitspawn2("/dev_hdd0/game/MESS90000/USRDIR/frontend.self", args, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
-#else
-			sys_game_process_exitspawn2("/dev_hdd0/game/MAME90000/USRDIR/frontend.self", args, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
-#endif
-		}
-
-		thenticks = nowticks;
-	}
-
-	return 0;
-}
+#include "watchdog.h"
+sys_event_queue_t watchdog::m_queue;
+sys_event_port_t watchdog::m_port;
+bool watchdog::m_done;
+ESThread* watchdog::m_thread;
 
 
 //============================================================
@@ -178,8 +148,7 @@ void	CELL_Log(const char* aMessage)
 int main(int argc, char *argv[])
 {
 	InitES();
-	watchdog_mutex = es_threads->MakeMutex();
-	watchdog_thread = es_threads->MakeThread(watchdog_routine, 0);
+	watchdog::init();
 
 	// cli_execute does the heavy lifting; if we have osd-specific options, we
 	// would pass them as the third parameter here
@@ -187,8 +156,7 @@ int main(int argc, char *argv[])
 	sdl_options options;
 	int res = cli_execute(options, osd, argc, argv);
 
-	watchdog_death = true;
-	watchdog_thread->Wait();
+	watchdog::quit();
 
 	QuitES();
 
@@ -416,9 +384,7 @@ void mini_osd_interface::update(bool skip_redraw)
 		glClear(GL_COLOR_BUFFER_BIT); //Better to clear now or at front of function?
 
 		// tick the watchdog
-		watchdog_mutex->Lock();
-		watchdog_timer ++;
-		watchdog_mutex->Unlock();
+		watchdog::tick();
 	}
 
 	// update input
