@@ -14,6 +14,8 @@
 #include <es_system.h>
 #include <sys/event.h>
 
+void return_to_loader(bool aError);
+
 class watchdog
 {
 	public:
@@ -32,6 +34,7 @@ class watchdog
 		static void quit(void)
 		{
 			m_done = true;
+			sys_event_port_send(m_port, 1, 0, 0);
 			m_thread->Wait();
 
 			sys_event_port_disconnect(m_port);
@@ -46,7 +49,7 @@ class watchdog
 		{
 			sys_event_t event;
 
-			while(!m_done)
+			while(true)
 			{
 				if(ETIMEDOUT == sys_event_queue_receive(m_queue, &event, 5000000))
 				{
@@ -55,17 +58,15 @@ class watchdog
 						return 0;
 					}
 
-					const char* args[2] = {"-showlog", 0};
 					CELL_Log("Watchdog activated: No updates for 5 seconds. Crashed?");
-#ifdef MESS
-					sys_game_process_exitspawn2("/dev_hdd0/game/MESS90000/USRDIR/frontend.self", args, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
-#else
-					sys_game_process_exitspawn2("/dev_hdd0/game/MAME90000/USRDIR/frontend.self", args, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
-#endif
+					return_to_loader(true);
+				}
+
+				if(event.data1)
+				{
+					return 0;
 				}
 			}
-
-			return 0;
 		}
 
 	private:

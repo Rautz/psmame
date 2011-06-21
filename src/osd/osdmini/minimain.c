@@ -78,6 +78,7 @@ public:
 static INT32 joypad_get_state(void *device_internal, void *item_internal);
 void CELL_Log(const char* aFormat, va_list aArgs);
 void CELL_Log(const char* aMessage);
+void return_to_loader(bool aError);
 
 //============================================================
 //  GLOBALS
@@ -108,6 +109,25 @@ sys_event_port_t watchdog::m_port;
 bool watchdog::m_done;
 ESThread* watchdog::m_thread;
 
+//============================================================
+// MESS or MAME?
+//============================================================
+#ifdef MESS
+# define LOG_FILE "/dev_hdd0/game/MESS90000/USRDIR/mess.log"
+# define LOADER_BIN "/dev_hdd0/game/MESS90000/USRDIR/frontend.self"
+#else
+# define LOG_FILE "/dev_hdd0/game/MAME90000/USRDIR/mame.log"
+# define LOADER_BIN "/dev_hdd0/game/MAME90000/USRDIR/frontend.self"
+#endif
+
+//============================================================
+// return_to_loader
+//============================================================
+void return_to_loader(bool aError)
+{
+	static const char* args[2] = {"-showlog", 0};
+	sys_game_process_exitspawn2(LOADER_BIN, aError ? args : 0, 0, 0, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
+}
 
 //============================================================
 //  logging
@@ -117,11 +137,7 @@ void	CELL_Log(const char* aFormat, va_list aArgs)
 {
 	if(!CELL_LogFile)
 	{
-#ifndef MESS
-		CELL_LogFile = fopen("/dev_hdd0/game/MAME90000/USRDIR/mame.log", "w");
-#else
-		CELL_LogFile = fopen("/dev_hdd0/game/MESS90000/USRDIR/mess.log", "w");
-#endif
+		CELL_LogFile = fopen(LOG_FILE, "w");
 	}
 
 	vfprintf(CELL_LogFile, aFormat, aArgs);
@@ -131,11 +147,7 @@ void	CELL_Log(const char* aMessage)
 {
 	if(!CELL_LogFile)
 	{
-#ifndef MESS
-		CELL_LogFile = fopen("/dev_hdd0/game/MAME90000/USRDIR/mame.log", "w");
-#else
-		CELL_LogFile = fopen("/dev_hdd0/game/MESS90000/USRDIR/mess.log", "w");
-#endif
+		CELL_LogFile = fopen(LOG_FILE, "w");
 	}
 
 	fprintf(CELL_LogFile, "%s\n", aMessage);
@@ -162,12 +174,7 @@ int main(int argc, char *argv[])
 
 	if(!QuitThruXMB)
 	{
-		const char* args[2] = {"-showlog", 0};
-#ifdef MESS
-		sys_game_process_exitspawn2("/dev_hdd0/game/MESS90000/USRDIR/frontend.self", (res == MAMERR_NONE) ? NULL : args, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
-#else
-		sys_game_process_exitspawn2("/dev_hdd0/game/MAME90000/USRDIR/frontend.self", (res == MAMERR_NONE) ? NULL : args, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
-#endif
+		return_to_loader(res != MAMERR_NONE);
 	}
 	else
 	{
