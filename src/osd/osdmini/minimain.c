@@ -73,6 +73,13 @@ public:
 #include "rendersw.c"
 
 //============================================================
+//  FUNCTION PROTOTYPES
+//============================================================
+static INT32 joypad_get_state(void *device_internal, void *item_internal);
+void CELL_Log(const char* aFormat, va_list aArgs);
+void CELL_Log(const char* aMessage);
+
+//============================================================
 //  GLOBALS
 //============================================================
 
@@ -94,11 +101,43 @@ static Texture* esTex;
 static GLuint vertex_buffer;
 static bool QuitThruXMB;
 
-//============================================================
-//  FUNCTION PROTOTYPES
-//============================================================
+// Watch dog
+static ESThread* watchdog_thread;
+static ESMutex* watchdog_mutex;
+static int64_t watchdog_timer;
+static bool watchdog_death;
 
-static INT32 joypad_get_state(void *device_internal, void *item_internal);
+int watchdog_routine(void* aBcD)
+{
+	watchdog_mutex->Lock();
+	int64_t thenticks = watchdog_timer;
+	watchdog_mutex->Unlock();
+
+	while(!watchdog_death)
+	{
+		Utility::Sleep(5000);
+
+		watchdog_mutex->Lock();
+		int64_t nowticks = watchdog_timer;
+		watchdog_mutex->Unlock();
+
+		if(nowticks == thenticks)
+		{
+			const char* args[2] = {"-showlog", 0};
+			CELL_Log("Watchdog activated: No updates for 5 seconds. Crashed?");
+#ifdef MESS
+			sys_game_process_exitspawn2("/dev_hdd0/game/MESS90000/USRDIR/frontend.self", args, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
+#else
+			sys_game_process_exitspawn2("/dev_hdd0/game/MAME90000/USRDIR/frontend.self", args, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
+#endif
+		}
+
+		thenticks = nowticks;
+	}
+
+	return 0;
+}
+
 
 //============================================================
 //  logging
@@ -118,18 +157,38 @@ void	CELL_Log(const char* aFormat, va_list aArgs)
 	vfprintf(CELL_LogFile, aFormat, aArgs);
 }
 
+void	CELL_Log(const char* aMessage)
+{
+	if(!CELL_LogFile)
+	{
+#ifndef MESS
+		CELL_LogFile = fopen("/dev_hdd0/game/MAME90000/USRDIR/mame.log", "w");
+#else
+		CELL_LogFile = fopen("/dev_hdd0/game/MESS90000/USRDIR/mess.log", "w");
+#endif
+	}
+
+	fprintf(CELL_LogFile, "%s\n", aMessage);
+}
+
+
 //============================================================
 //  main
 //============================================================
 int main(int argc, char *argv[])
 {
 	InitES();
+	watchdog_mutex = es_threads->MakeMutex();
+	watchdog_thread = es_threads->MakeThread(watchdog_routine, 0);
 
 	// cli_execute does the heavy lifting; if we have osd-specific options, we
 	// would pass them as the third parameter here
 	mini_osd_interface osd;
 	sdl_options options;
 	int res = cli_execute(options, osd, argc, argv);
+
+	watchdog_death = true;
+	watchdog_thread->Wait();
 
 	QuitES();
 
@@ -355,6 +414,11 @@ void mini_osd_interface::update(bool skip_redraw)
 
 		psglSwap();
 		glClear(GL_COLOR_BUFFER_BIT); //Better to clear now or at front of function?
+
+		// tick the watchdog
+		watchdog_mutex->Lock();
+		watchdog_timer ++;
+		watchdog_mutex->Unlock();
 	}
 
 	// update input
