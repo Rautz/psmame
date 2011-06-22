@@ -74,7 +74,7 @@ struct					MESSSystem : public SummerfaceItem
 			}
 		}
 
-		Devices->AddItem(boost::make_shared<SummerfaceItem>("Boot MESS", ""));
+		Devices->AddItem(boost::make_shared<SummerfaceItem>("Boot MESS", "bootICON"));
 	}
 
 	bool				FillDevices						(std::vector<const char*>& aArguments)
