@@ -59,7 +59,6 @@ SettingDef BoolSettings[] =
 {
 	{"skipinfo", "Skip Game Info", &Settings::SkipGameInfo},
 	{"cheats", "Enable Cheats", &Settings::Cheats},
-	{"autosave", "Auto Save/Load State", &Settings::AutoSave},
 	{"autoskip", "Enable Auto Frame Skip", &Settings::AutoFrameSkip},
 };
 
@@ -68,7 +67,7 @@ void					Settings::Do						()
 	SummerfaceList_Ptr list = boost::make_shared<SummerfaceList>(Area(10, 10, 80, 80));
 	list->SetView(boost::make_shared<SettingView>(list));
 
-	for(int i = 0; i != 4; i ++)
+	for(int i = 0; i != 3; i ++)
 	{
 		BoolSettings[i].Item = boost::make_shared<BooleanItem>(BoolSettings[i].Description, *(BoolSettings[i].Value));
 		list->AddItem(BoolSettings[i].Item);
@@ -77,7 +76,7 @@ void					Settings::Do						()
 	Summerface::Create("settings", list)->Do();
 	bool wantRestart = false;
 
-	for(int i = 0; i != 4; i ++)
+	for(int i = 0; i != 3; i ++)
 	{
 		*BoolSettings[i].Value = BoolSettings[i].Item->IntProperties["VALUE"];
 	}
@@ -90,7 +89,7 @@ void					Settings::Read						()
 	CSimpleIniA ini;
 	ini.LoadFile(CONFIG_FILE);
 
-	for(int i = 0; i != 4; i ++)
+	for(int i = 0; i != 3; i ++)
 	{
 		*BoolSettings[i].Value = ini.GetBoolValue("psmess", BoolSettings[i].ConfigName, false);
 	}
@@ -101,7 +100,7 @@ void					Settings::Dump						()
 	CSimpleIniA ini;
 	ini.LoadFile(CONFIG_FILE);
 
-	for(int i = 0; i != 4; i ++)
+	for(int i = 0; i != 3; i ++)
 	{
 		ini.SetBoolValue("psmess", BoolSettings[i].ConfigName, *BoolSettings[i].Value);
 	}
@@ -123,6 +122,5 @@ void					Settings::RestartApp				()
 
 bool					Settings::Cheats;
 bool					Settings::SkipGameInfo;
-bool					Settings::AutoSave;
 bool					Settings::AutoFrameSkip;
 

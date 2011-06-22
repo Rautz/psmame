@@ -177,16 +177,18 @@ int				main		(int argc, char** argv)
 #else
 				cellFsChmod("/dev_hdd0/game/MESS90000/USRDIR/mess.self", 0777);
 
-				uint32_t onArg = 2;
+				uint32_t onArg = 0;
 				const char* args[32];
 				memset(args, 0, sizeof(args));
 
+				args[onArg++] = strdup(systemSelect->Name.c_str());
+				args[onArg++] = "-rompath";
+				args[onArg++] = "/dev_hdd0/ROMS/mess_data/bios";
 				if(Settings::Cheats) 		args[onArg++] = "-cheat";
 				if(Settings::SkipGameInfo)	args[onArg++] = "-skip_gameinfo";
-				if(Settings::AutoSave)		args[onArg++] = "-autosave";
 				if(Settings::AutoFrameSkip)	args[onArg++] = "-autoframeskip";
-				args[onArg++] = "-cart";
-				args[onArg++] = filename.c_str();
+				args[onArg++] = "-cart1";
+				args[onArg++] = strdup(filename.c_str());
 
 				sys_game_process_exitspawn2("/dev_hdd0/game/MESS90000/USRDIR/mess.self", (const char**)args, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
 #endif

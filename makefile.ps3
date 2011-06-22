@@ -451,7 +451,7 @@ CCOMFLAGS += -pg
 endif
 
 # add the optimization flag
-CCOMFLAGS += -O2
+CCOMFLAGS += -O3 -mno-toc
 
 # if we are optimizing, include optimization options
 # and make all errors into warnings
@@ -526,11 +526,11 @@ endif
 
 # LDFLAGS are used generally; LDFLAGSEMULATOR are additional
 # flags only used when linking the core emulator
-LDFLAGS =
+LDFLAGS = 
 ifneq ($(TARGETOS),macosx)
 ifneq ($(TARGETOS),os2)
 ifneq ($(TARGETOS),solaris)
-LDFLAGS = -Wl,--warn-common
+LDFLAGS = -Wl,--warn-common -Wl,--no-toc-restore -Wl,--strip-unused-data -Wl,--strip-duplicates
 endif
 endif
 endif

@@ -283,7 +283,7 @@ static inline void update_render(UINT32 width, UINT32 height)
 
 		render_width = width;
 		render_height = height;
-		render_surf = (UINT32*)osd_malloc(width * height * 4);
+		render_surf = (UINT32*)memalign(16, width * height * 4);
 		esTex = new Texture(width, height);
 	}
 

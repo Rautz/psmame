@@ -11,7 +11,6 @@ class							Settings
 	public:
 		static bool				Cheats;
 		static bool				SkipGameInfo;
-		static bool				AutoSave;
 		static bool				AutoFrameSkip;
 };
 
