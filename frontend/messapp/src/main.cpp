@@ -30,27 +30,38 @@ inline const char*		TryXmlGetStringAttribute	(const TiXmlElement* aAttribute, co
 	return (aAttribute && 0 != aAttribute->Attribute(aName)) ? aAttribute->Attribute(aName) : aDefault;
 }
 
-struct					MESSDevice
+struct					MESSDevice : public SummerfaceItem
 {
-						MESSDevice						(TiXmlNode* aNode)
+						MESSDevice						(TiXmlNode* aNode) : SummerfaceItem("", ""),
+		Name(TryXmlGetStringAttribute(aNode->ToElement(), "type")),
+		Tag(TryXmlGetStringAttribute(aNode->ToElement(), "tag")),
+		File(""),
+		Mandatory(TryXmlGetIntAttribute(aNode->ToElement(), "mandatory", 0))
 	{
-		Name = TryXmlGetStringAttribute(aNode->ToElement(), "type");
-		Tag = TryXmlGetStringAttribute(aNode->ToElement(), "tag");
-		Mandatory = TryXmlGetIntAttribute(aNode->ToElement(), "mandatory", 0);
+		SetText(Name);
+		SetImage(Mandatory ? "mandatoryICON" : "optionalICON");
+	}
+
+	virtual std::string	GetText							()
+	{
+		return Name + "  [" + File + "]";
 	}
 
 	std::string			Name;
 	std::string			Tag;
+	std::string			File;
 	int					Mandatory;
 };
 
 struct					MESSSystem : public SummerfaceItem
 {
-						MESSSystem						(TiXmlNode* aNode) : SummerfaceItem("", "")
+						MESSSystem						(TiXmlNode* aNode) : SummerfaceItem("", ""),
+		Name(TryXmlGetStringAttribute(aNode->ToElement(), "name")),
+		Devices(boost::make_shared<SummerfaceList>(Area(10, 10, 80, 80)))
 	{
-		Name = TryXmlGetStringAttribute(aNode->ToElement(), "name");
+		Devices->SetView(boost::make_shared<AnchoredListView>(Devices));
 		SetText(aNode->FirstChild("description")->ToElement()->GetText());
-
+//TODO: Set icon based on status
 		//Grab the devices
 		if(aNode->FirstChild("device"))
 		{
@@ -58,14 +69,54 @@ struct					MESSSystem : public SummerfaceItem
 			{
 				if(strcmp(devices->Value(), "device") == 0)
 				{
-					Devices.push_back(MESSDevice(devices));
+					Devices->AddItem(boost::make_shared<MESSDevice>(devices));
 				}
 			}
+		}
+
+		Devices->AddItem(boost::make_shared<SummerfaceItem>("Boot MESS", ""));
+	}
+
+	bool				FillDevices						(std::vector<const char*>& aArguments)
+	{
+		std::vector<std::string> nbm;
+		Summerface_Ptr sface = Summerface::Create("devices", Devices);
+		FileSelect FileChooser("Select File", nbm, "", false);
+
+		while(true)
+		{
+			sface->Do();
+
+			if(Devices->WasCanceled())
+			{
+				return false;
+			}
+
+			if(Devices->GetSelected()->GetText() == "Boot MESS")
+			{
+				aArguments.push_back(strdup(Name.c_str()));
+
+				for(int i = 0; i != Devices->GetItemCount(); i ++)
+				{
+					boost::shared_ptr<MESSDevice> Device = boost::static_pointer_cast<MESSDevice>(Devices->GetItem(i));
+
+					if(Device->GetText() != "Boot MESS" && Device->File.size())
+					{
+						aArguments.push_back(strdup((std::string("-") + Device->Tag).c_str()));
+						aArguments.push_back(strdup((std::string("\"") + Device->File + "\"").c_str()));
+					}
+				}
+
+				return true;
+			}
+
+			boost::shared_ptr<MESSDevice> Device = boost::static_pointer_cast<MESSDevice>(Devices->GetSelected());
+			Device->File = FileChooser.GetFile();
 		}
 	}
 
 	std::string				Name;
-	std::list<MESSDevice>	Devices;
+	SummerfaceList_Ptr		Devices;
 };
 
 void			Exit		()
@@ -132,6 +183,20 @@ boost::shared_ptr<MESSSystem>	DoSystemsList		()
 	return SystemList->WasCanceled() ? boost::shared_ptr<MESSSystem>() : boost::static_pointer_cast<MESSSystem>(SystemList->GetSelected());
 }
 
+#ifndef __CELLOS_LV2__
+static std::string				VectorToString				(std::vector<const char*>& aStrings, char aSeparate)
+{
+	std::string output;
+	
+	for(std::vector<const char*>::iterator i = aStrings.begin(); i != aStrings.end(); i ++)
+	{
+		output += (*i) + std::string(1, aSeparate);
+	}
+	
+	return output.substr(0, output.length() - 1);
+}
+#endif
+
 int				main		(int argc, char** argv)
 {
 	try
@@ -149,6 +214,16 @@ int				main		(int argc, char** argv)
 
 		Settings::Read();
 
+		std::vector<const char*> arguments;
+#ifdef __CELLOS_LV2__
+		arguments.push_back("-rompath");
+		arguments.push_back("/dev_hdd0/ROMS/mess_data/bios");
+#else
+		arguments.push_back("/chroot/ps3dev/home/jason/ps3dev/mame-pc/mess64");
+		arguments.push_back("-rompath");
+		arguments.push_back("\"/opt/media/Games/MESS ROMS\"");
+#endif
+
 		//Wait to start game
 		while(true)
 		{
@@ -161,36 +236,20 @@ int				main		(int argc, char** argv)
 				Exit();
 			}
 
-			//HACK Get the file
-			std::vector<std::string> nbm;
-			FileSelect FileChooser("Select File", nbm, "", false);
-			std::string filename = FileChooser.GetFile();
-
-			//Don't continue if file chooser was canceled
-			if(!filename.empty())
+			//Fill the devies
+			if(systemSelect->FillDevices(arguments))
 			{
+				if(Settings::Cheats) 		arguments.push_back("-cheat");
+				if(Settings::SkipGameInfo)	arguments.push_back("-skip_gameinfo");
+				if(Settings::AutoFrameSkip)	arguments.push_back("-autoframeskip");
+
 #ifndef __CELLOS_LV2__
-				char buffer[1024];
-				//HACKY HACKY
-				snprintf(buffer, 1024, "xmess %s -cart \"%s\"", systemSelect->Name.c_str(), filename.c_str());
-				system(buffer);
+				std::string argString = VectorToString(arguments, ' ');
+				system(argString.c_str());
 #else
+				arguments.push_back(0);
 				cellFsChmod("/dev_hdd0/game/MESS90000/USRDIR/mess.self", 0777);
-
-				uint32_t onArg = 0;
-				const char* args[32];
-				memset(args, 0, sizeof(args));
-
-				args[onArg++] = strdup(systemSelect->Name.c_str());
-				args[onArg++] = "-rompath";
-				args[onArg++] = "/dev_hdd0/ROMS/mess_data/bios";
-				if(Settings::Cheats) 		args[onArg++] = "-cheat";
-				if(Settings::SkipGameInfo)	args[onArg++] = "-skip_gameinfo";
-				if(Settings::AutoFrameSkip)	args[onArg++] = "-autoframeskip";
-				args[onArg++] = "-cart1";
-				args[onArg++] = strdup(filename.c_str());
-
-				sys_game_process_exitspawn2("/dev_hdd0/game/MESS90000/USRDIR/mess.self", (const char**)args, NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
+				sys_game_process_exitspawn2("/dev_hdd0/game/MESS90000/USRDIR/mess.self", (const char**)&arguments[0], NULL, NULL, 0, 64, SYS_PROCESS_PRIMARY_STACK_SIZE_512K);
 #endif
 			}
 		}
