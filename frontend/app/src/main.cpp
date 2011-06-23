@@ -10,6 +10,34 @@ void			Exit		()
 	exit(0);
 }
 
+//Favorite list
+std::vector<std::string> Favorites;
+bool				IsFavorite		(const std::string& aDriver)
+{
+	return std::find(Favorites.begin(), Favorites.end(), aDriver) != Favorites.end();
+}
+
+
+//Sort the game list
+bool				GameSort		(SummerfaceItem_Ptr aA, SummerfaceItem_Ptr aB)
+{
+	bool aIsFav = IsFavorite(aA->Properties["DRIVER"]);
+	bool bIsFav = IsFavorite(aB->Properties["DRIVER"]);
+
+	if(aIsFav && !bIsFav)
+	{
+		return true;
+	}
+	else if(!aIsFav && bIsFav)
+	{
+		return false;
+	}
+	else
+	{
+		return aA->GetText() < aB->GetText();
+	}
+}
+
 class													MAMEListView : public AnchoredListView
 {
 	public:
@@ -37,6 +65,23 @@ class													MAMEListView : public AnchoredListView
 					}
 
 					List->SetSelection(List->GetSelection() + (goingUp ? -1 : 1));
+				}
+			}
+
+			//Favorites
+			if(ESInput::ButtonDown(0, ES_BUTTON_AUXRIGHT2))
+			{
+				std::vector<std::string>::iterator item = std::find(Favorites.begin(), Favorites.end(), List->GetSelected()->Properties["DRIVER"]);
+
+				if(item != Favorites.end())
+				{
+					Favorites.erase(item);
+					List->GetSelected()->SetColors(Colors::Normal, Colors::HighLight);
+				}
+				else
+				{
+					Favorites.push_back(List->GetSelected()->Properties["DRIVER"]);
+					List->GetSelected()->SetColors(Colors::SpecialNormal, Colors::SpecialHighLight);
 				}
 			}
 
@@ -75,7 +120,6 @@ class													MAMEListView : public AnchoredListView
 		uint32_t										NeedSwitch;
 		uint32_t										SwitchTime;
 };
-
 
 void						MakeGameDatabase			(std::list<std::string>& aFiles)
 {
@@ -145,6 +189,12 @@ void			LoadGameDatabase	(SummerfaceList_Ptr aGames)
 			SummerfaceItem_Ptr listitem = boost::make_shared<SummerfaceItem>(title, "");
 			listitem->Properties["DRIVER"] = driver;
 			listitem->IntProperties["SETNUM"] = atoi(setnumber.c_str());
+
+			if(IsFavorite(driver))
+			{
+				listitem->SetColors(Colors::SpecialNormal, Colors::SpecialHighLight);
+			}
+
 			aGames->AddItem(listitem);
 		}
 	}
@@ -197,11 +247,14 @@ int				main		(int argc, char** argv)
 			MakeGameDatabase(dirList);
 		}
 
+		//Load the favorites
+		Favorites = Utility::StringToVector(Settings::Favorites, ' ');
+
 		//Build the list
 		SummerfaceList_Ptr linelist = boost::make_shared<SummerfaceList>(Area(10, 10, 50, 80));
 		linelist->SetView(boost::make_shared<MAMEListView>(linelist));
 		LoadGameDatabase(linelist);
-		linelist->Sort();
+		linelist->Sort(GameSort);
 
 		SummerfaceImage_Ptr snap = boost::make_shared<SummerfaceImage>(Area(60, 10, 30, 80), "");
 		snap->SetHeader("Press [R3] for options");
@@ -211,6 +264,10 @@ int				main		(int argc, char** argv)
 		sface->AddWindow("snapshot", snap);
 		sface->SetActiveWindow("games");
 		sface->Do();
+
+		//Store favorites
+		Settings::Favorites = Utility::VectorToString(Favorites, ' ');
+		Settings::Dump();
 
 		//Handle result
 		if(!linelist->WasCanceled())

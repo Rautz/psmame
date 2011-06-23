@@ -130,6 +130,7 @@ void					Settings::Read						()
 	ini.LoadFile(CONFIG_FILE);
 
 	ROMPath = std::string(ini.GetValue("psmame", "rompath", ROM_DIR));
+	Favorites = std::string(ini.GetValue("psmame", "favorites", ""));
 
 	for(int i = 0; i != 3; i ++)
 	{
@@ -142,6 +143,7 @@ void					Settings::Dump						()
 	CSimpleIniA ini;
 	ini.LoadFile(CONFIG_FILE);
 	ini.SetValue("psmame", "rompath", ROMPath.c_str());
+	ini.SetValue("psmame", "favorites", Favorites.c_str());
 
 	for(int i = 0; i != 3; i ++)
 	{
@@ -164,6 +166,7 @@ void					Settings::RestartApp				()
 }
 
 std::string				Settings::ROMPath;
+std::string				Settings::Favorites;
 bool					Settings::Cheats;
 bool					Settings::SkipGameInfo;
 bool					Settings::AutoFrameSkip;

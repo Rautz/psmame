@@ -12,6 +12,7 @@ class							Settings
 
 	public:
 		static std::string		ROMPath;
+		static std::string		Favorites;
 		static bool				Cheats;
 		static bool				SkipGameInfo;
 		static bool				AutoFrameSkip;
